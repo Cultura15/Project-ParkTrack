@@ -5,7 +5,7 @@
 
 # 📌Section
 
-<code>Section: CSIT327 - G2</code>
+<code>CSIT327 - G2</code>
 
 ---
 
