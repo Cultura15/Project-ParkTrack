@@ -4,7 +4,7 @@
 <code>Section: CSIT327 - G2</code>
 
 Members:<br>
-Artezuela, Jhudiel Adrian<br>
-Cultura, Jesson Chyd<br>
-Destura, Harold
+<code>Artezuela, Jhudiel Adrian</code><br>
+<code>Cultura, Jesson Chyd</code><br>
+<code>Destura, Harold</code>
 
