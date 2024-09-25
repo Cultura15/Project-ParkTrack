@@ -12,7 +12,7 @@ Section: <code>CSIT327 - G2</code>
 
 # 💼Members:
 
-Member 1: <code>Artezuela, Jhudiel Adrian</code><br>
-Member 2: <code>Cultura, Jesson Chyd</code><br>
-Member 3: <code>Destura, Harold</code>
+👨‍💼<code>Artezuela, Jhudiel Adrian</code><br>
+👨‍💼<code>Cultura, Jesson Chyd</code><br>
+👨‍💼<code>Destura, Harold</code>
 
