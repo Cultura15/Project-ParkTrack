@@ -1,11 +1,12 @@
 # Project-ParkTrack
-<code>This repository contains all the relevant documentation for our project "ParkTrack CIT". </code>
+This repository contains all the relevant documentation for our project "ParkTrack CIT.
 
 ---
 
-# 📌Section
+# 📌Info
 
-<code>CSIT327 - G2</code>
+Prof: <code>Sir Frederick Revilleza</code>
+Section: <code>CSIT327 - G2</code>
 
 ---
 
