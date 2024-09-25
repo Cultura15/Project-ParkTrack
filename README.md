@@ -5,7 +5,7 @@ This repository contains all the relevant documentation for our project "ParkTra
 
 # 📌Info
 
-Prof: <code>Sir Frederick Revilleza</code> <br>
+Prof: <code>Sir. Frederick Revilleza</code> <br>
 Section: <code>CSIT327 - G2</code>
 
 ---
