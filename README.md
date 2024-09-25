@@ -5,7 +5,8 @@
 
 ---
 
-# 💼Members:<br><br>
+# 💼Members:
+
 <code>Artezuela, Jhudiel Adrian</code><br>
 <code>Cultura, Jesson Chyd</code><br>
 <code>Destura, Harold</code>
