@@ -1,5 +1,5 @@
 # Project-ParkTrack
-This repository contains all the relevant documentation for our project "ParkTrack CIT".
+<code>This repository contains all the relevant documentation for our project "ParkTrack CIT". </code>
 
 Section: CSIT327 - G2
 
