@@ -14,12 +14,12 @@ Section: <code>CSIT327 - G2</code> <br> <br>
 
 # List of features
 
-Parking Status Management <br>
-Check Parking Availability <br>
-Sticker Management <br>
-Parking Reservation <br>
-User Profile Management <br>
-Notification System 
+• Parking Status Management <br>
+• Check Parking Availability <br>
+• Sticker Management <br>
+• Parking Reservation <br>
+• User Profile Management <br>
+• Notification System 
 
 
 ---
