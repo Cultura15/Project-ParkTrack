@@ -1,5 +1,5 @@
-# Overview
-ParkTrack CIT is a web-based system that allows university students and staff to update their current parking location, apply for and renew parking stickers, view real-time parking availability across campus, receive notifications for upcoming sticker expirations, and adjust parking availability based on campus events. The system ensures users can log in to update their parking status instantly, helping to maintain accurate records of parking locations and manage parking resources efficiently.
+# Project Overview
+ParkTrack CIT is a web-based system that allows university students and staff to update their current parking location, apply for and renew parking stickers, view parking availability across campus, receive notifications for upcoming sticker expirations, and adjust parking availability based on campus events. The system ensures users can log in to update their parking status instantly, helping to maintain accurate records of parking locations and manage parking resources efficiently.
 
 Prof: <code>Sir. Frederick Revilleza</code> <br>
 Section: <code>CSIT327 - G2</code>
@@ -14,12 +14,12 @@ Section: <code>CSIT327 - G2</code>
 
 # List of features
 
-Parking Status Management
-Sticker Management
-Parking Reservation
-User Profile Management
-View Parking Map
-Check Parking Availability
+Parking Status Management <br>
+Sticker Management <br>
+Parking Reservation <br>
+User Profile Management <br>
+View Parking Map <br>
+Check Parking Availability 
 
 ---
 
