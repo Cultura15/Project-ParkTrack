@@ -28,6 +28,7 @@ Section: <code>CSIT327 - G2</code> <br> <br>
 https://www.figma.com/design/VV56KRREnUbwl4ba2l7H7T/UI%2FUX-ParkTrack-CIT?node-id=0-1&node-type=canvas&t=n1esRTXgIx6Sv04A-0
 
 # Link to ERD:
+https://online.visual-paradigm.com/share.jsp?id=333539343431352d32
 
 
 
