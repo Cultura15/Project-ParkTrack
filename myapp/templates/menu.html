@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkTrack CIT</title>
+    <link rel="stylesheet" href="{% static 'menu.css' %}">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="user-info">
+                <span>Hi, user_101</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item">Home</a>
+                <a href="#" class="nav-item">Menu</a>
+                <a href="#" class="nav-item">News</a>
+                <a href="#" class="nav-item">Sign out</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <h1>ParkTrack <span>-CIT-</span></h1>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search">
+                </div>
+            </header>
+
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <h2 class="title">PARKTRACK</h2>
+                <p class="description">ParkTrack CIT is transforming how the university community manages parking, ensuring that spaces are accessible and effortlessly maintained for everyone on campus.</p>
+                
+                <!-- Vehicle Images -->
+                <div class="vehicles">
+                    <img src="bus.png" alt="Bus" class="vehicle-image bus">
+                    <img src="car.png" alt="Car" class="vehicle-image car">
+                    <img src="suv.png" alt="SUV" class="vehicle-image suv">
+                    <img src="motorcycle1.png" alt="Motorcycle 1" class="vehicle-image motorcycle1">
+                    <img src="motorcycle2.png" alt="Motorcycle 2" class="vehicle-image motorcycle2">
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
