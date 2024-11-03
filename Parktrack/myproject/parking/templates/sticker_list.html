@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sticker List</title>
+</head>
+<body>
+    <h1>Stickers</h1>
+    <a href="{% url 'sticker_create' %}">Add Sticker</a>
+    <ul>
+        {% for sticker in stickers %}
+            <li>
+                {{ sticker.color }} - Expires on: {{ sticker.expiration_date }}
+                <a href="{% url 'sticker_update' sticker.pk %}">Edit</a>
+                <a href="{% url 'sticker_delete' sticker.pk %}">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

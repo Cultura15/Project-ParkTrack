@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle List</title>
+</head>
+<body>
+    <h1>Vehicles</h1>
+    <a href="{% url 'vehicle_create' %}">Add Vehicle</a>
+    <ul>
+        {% for vehicle in vehicles %}
+            <li>
+                {{ vehicle.license_plate }} - {{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.year }})
+                <a href="{% url 'vehicle_update' vehicle.pk %}">Edit</a>
+                <a href="{% url 'vehicle_delete' vehicle.pk %}">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
