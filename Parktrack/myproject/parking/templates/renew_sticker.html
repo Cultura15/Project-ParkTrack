@@ -1,0 +1,16 @@
+
+{% extends 'parking/templates/base.html' %}
+
+{% block title %}Renew Sticker{% endblock %}
+
+{% block content %}
+    <h2>Renew Sticker</h2>
+    <form action="{% url 'renew_sticker' sticker.id %}" method="POST">
+        {% csrf_token %}
+        <label for="expiry_date">New Expiry Date:</label>
+        <input type="date" name="expiry_date" required>
+        
+        <button type="submit">Renew Sticker</button>
+    </form>
+    <a href="{% url 'home' %}">Back to Home</a>
+{% endblock %}

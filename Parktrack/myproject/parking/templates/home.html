@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - ParkTrack{% endblock %}
+
+{% block content %}
+<!-- Main Title Section -->
+<h2>Vehicle and Sticker Management</h2>
+
+<!-- Register New Vehicle Section -->
+<h3>Register a New Vehicle</h3>
+<form action="{% url 'register_vehicle' %}" method="POST">
+    {% csrf_token %}
+    <label for="manufacturer">Manufacturer:</label>
+    <input type="text" id="manufacturer" name="manufacturer" required>
+    <label for="color">Color:</label>
+    <input type="text" id="color" name="color" required>
+    <label for="type">Make:</label>
+    <input type="text" id="type" name="type" required>
+    <label for="purchase_date">Purchase Date:</label>
+    <input type="date" id="purchase_date" name="purchase_date" required>
+    <label for="expiry_date">Expiry Date:</label>
+    <input type="date" id="expiry_date" name="expiry_date" required>
+    <button type="submit">Register Vehicle</button>
+</form>
+
+<!-- Current Vehicles Section -->
+<h3>Current Vehicles</h3>
+<ul>
+    {% for vehicle in vehicles %}
+    <li id="vehicle-{{ vehicle.id }}">
+        <span class="vehicle-info">
+            {{ vehicle.vehicleManufacturer }} - {{ vehicle.vehicleColor }} - {{ vehicle.vehicleType }}
+        </span>
+        <button onclick="showEditForm('{{ vehicle.id }}')">Edit</button>
+        <form action="{% url 'delete_vehicle' vehicle.id %}" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">Delete</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+
+<!-- Current Stickers Section -->
+<h3>Current Stickers</h3>
+<ul>
+    {% for sticker in stickers %}
+    <li id="sticker-{{ sticker.id }}">
+        Sticker for {{ sticker.vehicle.vehicleManufacturer }} - Expires on {{ sticker.expiryDate }}
+        <button onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
+    </li>
+    {% endfor %}
+</ul>
+
+<!-- Edit Vehicle Form Section -->
+<div id="edit-form" style="display:none;">
+    <h3>Edit Vehicle</h3>
+    <form id="vehicle-edit-form" action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="vehicle_id" id="vehicle-id">
+        <label for="edit-manufacturer">Manufacturer:</label>
+        <input type="text" id="edit-manufacturer" name="manufacturer" required>
+        <label for="edit-color">Color:</label>
+        <input type="text" id="edit-color" name="color" required>
+        <label for="edit-type">Type:</label>
+        <input type="text" id="edit-type" name="type" required>
+        <button type="submit">Update Vehicle</button>
+        <button type="button" onclick="cancelEdit()">Cancel</button>
+    </form>
+</div>
+
+<!-- Renew Sticker Form Section -->
+<div id="renew-form" style="display:none;">
+    <h3>Renew Sticker</h3>
+    <form id="sticker-renew-form" action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="sticker_id" id="sticker-id">
+        <label for="new-expiry-date">New Expiry Date:</label>
+        <input type="date" id="new-expiry-date" name="expiry_date" required>
+        <button type="submit">Renew</button>
+        <button type="button" onclick="cancelRenew()">Cancel</button>
+    </form>
+</div>
+
+<!-- JavaScript Section -->
+<script>
+function showEditForm(vehicleId) {
+    // Populate form fields based on vehicle information
+    const vehicleInfo = document.querySelector(`#vehicle-${vehicleId} .vehicle-info`).innerText.split(' - ');
+    document.getElementById('vehicle-id').value = vehicleId;
+    document.getElementById('edit-manufacturer').value = vehicleInfo[0];
+    document.getElementById('edit-color').value = vehicleInfo[1];
+    document.getElementById('edit-type').value = vehicleInfo[2];
+    document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
+    document.getElementById('edit-form').style.display = 'block';
+}
+
+function showRenewForm(stickerId) {
+    document.getElementById('sticker-id').value = stickerId;
+    document.getElementById('sticker-renew-form').action = "{% url 'renew_sticker' '0' %}".replace('0', stickerId);
+    document.getElementById('renew-form').style.display = 'block';
+}
+
+function cancelEdit() {
+    document.getElementById('edit-form').style.display = 'none';
+}
+
+function cancelRenew() {
+    document.getElementById('renew-form').style.display = 'none';
+}
+</script>
+{% endblock %}

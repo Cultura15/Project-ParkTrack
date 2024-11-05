@@ -1,0 +1,218 @@
+<!-- basis for the layout  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sticker Management</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #8B0000; /* Dark red for header */
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header img {
+            height: 50px;
+        }
+        header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .search-bar {
+            background-color: #300000;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 5px;
+        }
+        .search-bar input {
+            width: 200px;
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+        }
+        .search-bar button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            background-color: #FFA500;
+            cursor: pointer;
+        }
+
+        /* Banner Section */
+        .banner {
+            background: #fff url('banner-placeholder.png') no-repeat center center;
+            background-size: cover;
+            padding: 20px;
+            color: #8B0000;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Main content */
+        main {
+            padding: 20px;
+        }
+        .vehicle-section, .status-section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .vehicles, .status-history {
+            display: flex;
+            gap: 10px;
+        }
+        .vehicle-card, .status-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .add-vehicle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #D3D3D3;
+            font-size: 32px;
+            font-weight: bold;
+            color: #8B0000;
+            cursor: pointer;
+        }
+        .status-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border: 2px solid #f0f0f0;
+        }
+        .status-details {
+            text-align: left;
+            width: 70%;
+        }
+        .status-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .status-button {
+            background-color: #32CD32; /* Green */
+            color: #fff;
+        }
+        .remove-button, .renew-button {
+            background-color: #FF6347; /* Red */
+            color: #fff;
+        }
+        .dropdown {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div>
+            <img src="logo-placeholder.png" alt="ParkTrack Logo">
+            <h1>ParkTrack - CICT</h1>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Search">
+            <button>Search</button>
+        </div>
+    </header>
+
+    <!-- Banner Section -->
+    <div class="banner">
+        STICKER MANAGEMENT
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Vehicle Section -->
+        <div class="vehicle-section">
+            <div class="section-title">Your Vehicles</div>
+            <div class="vehicles">
+                <div class="vehicle-card">
+                    <img src="vehicle1-placeholder.png" alt="Vehicle 1" style="width:100%;">
+                    <div>2018 Wrangler Jeep</div>
+                    <div>Plate num: OVQ 8080</div>
+                </div>
+                <div class="vehicle-card">
+                    <img src="vehicle2-placeholder.png" alt="Vehicle 2" style="width:100%;">
+                    <div>Ducati 899 Panigali</div>
+                    <div>Plate num: 823 NAX</div>
+                </div>
+                <div class="vehicle-card add-vehicle">+</div>
+            </div>
+        </div>
+
+        <!-- Sticker Status Section -->
+        <div class="status-section">
+            <div class="section-title">Sticker Status and History</div>
+            <div class="status-history">
+                <div class="status-card">
+                    <div class="status-details">
+                        <div><strong>Vehicle Model:</strong> 2018 Wrangler Jeep</div>
+                        <div><strong>Vehicle Color:</strong> Blue</div>
+                        <div><strong>Sticker Status:</strong> Good</div>
+                    </div>
+                    <div class="status-actions">
+                        <button class="button status-button">Sticker status</button>
+                        <select class="dropdown">
+                            <option>Good</option>
+                            <option>Expired</option>
+                        </select>
+                        <button class="button remove-button">Remove</button>
+                        <button class="button renew-button">Renew</button>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <div class="status-details">
+                        <div><strong>Vehicle Model:</strong> Ducati 899 Panigali</div>
+                        <div><strong>Vehicle Color:</strong> White</div>
+                        <div><strong>Sticker Status:</strong> Near expiry</div>
+                    </div>
+                    <div class="status-actions">
+                        <button class="button status-button">Sticker status</button>
+                        <select class="dropdown">
+                            <option>Near expiry</option>
+                            <option>Expired</option>
+                        </select>
+                        <button class="button remove-button">Remove</button>
+                        <button class="button renew-button">Renew</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

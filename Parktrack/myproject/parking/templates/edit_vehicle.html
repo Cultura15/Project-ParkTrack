@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Vehicle - ParkTrack{% endblock %}
+
+{% block content %}
+<h2>Edit Vehicle</h2>
+<form method="POST">
+    {% csrf_token %}
+    <label for="manufacturer">Manufacturer:</label>
+    <input type="text" id="manufacturer" name="manufacturer" value="{{ vehicle.vehicleManufacturer }}" required>
+    
+    <label for="color">Color:</label>
+    <input type="text" id="color" name="color" value="{{ vehicle.vehicleColor }}" required>
+    
+    <label for="type">Type:</label>
+    <input type="text" id="type" name="type" value="{{ vehicle.vehicleType }}" required>
+    
+    <button type="submit">Update Vehicle</button>
+</form>
+<a href="{% url 'home' %}">Cancel</a>
+{% endblock %}

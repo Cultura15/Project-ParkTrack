@@ -1,0 +1,22 @@
+{% extends 'parking/templates/base.html' %}
+
+{% block title %}Register Vehicle{% endblock %}
+
+{% block content %}
+    <h2>Register a New Vehicle</h2>
+    <form action="{% url 'register_vehicle' %}" method="POST">
+        {% csrf_token %}
+        <label for="manufacturer">Manufacturer:</label>
+        <input type="text" name="manufacturer" required>
+        <label for="color">Color:</label>
+        <input type="text" name="color" required>
+        <label for="type">Type:</label>
+        <input type="text" name="type" required>
+        <label for="purchase_date">Purchase Date:</label>
+        <input type="date" name="purchase_date" required>
+        <label for="expiry_date">Expiry Date:</label>
+        <input type="date" name="expiry_date" required>
+        <button type="submit">Register Vehicle</button>
+    </form>
+    <a href="{% url 'home' %}">Back to Home</a>
+{% endblock %}
