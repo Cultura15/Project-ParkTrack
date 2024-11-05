@@ -1,0 +1,86 @@
+<!-- parking_area_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parking Areas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .area {
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #ecf0f1;
+        }
+        .lot {
+            border: 1px solid #3498db;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #dff9fb;
+        }
+        a, button {
+            text-decoration: none;
+            color: #2980b9;
+            margin-right: 10px;
+        }
+        .status-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            background-color: #e74c3c;
+            color: white;
+            cursor: pointer;
+        }
+        .status-button.vacant {
+            background-color: #27ae60;
+        }
+        .status-button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Parking Areas</h1>
+    <a href="{% url 'parking_area_create' %}">Add New Parking Area</a>
+    <div id="parking-areas">
+        {% for area in parking_areas %}
+            <div class="area">
+                <h2>{{ area.parking_location }}</h2>
+                <a href="{% url 'parking_area_update' area.pk %}">Edit</a>
+                <form action="{% url 'parking_area_delete' area.pk %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="status-button">Delete</button>
+                </form>
+                <div>
+                    <h3>Parking Lots:</h3>
+                    {% for lot in area.parking_lots.all %}
+                        <div class="lot">
+                            <p>Lot Number: {{ lot.parking_lot_number }} | Status: {{ lot.parking_lot_status }}</p>
+                            <form action="{% url 'parking_lot_toggle_status' lot.pk %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                {% if lot.parking_lot_status == "vacant" %}
+                                    <button type="submit" class="status-button occupied">Mark as Occupied</button>
+                                {% else %}
+                                    <button type="submit" class="status-button vacant">Mark as Vacant</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    {% empty %}
+                        <p>No parking lots available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <p>No parking areas available.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
