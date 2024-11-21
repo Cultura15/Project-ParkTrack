@@ -13,8 +13,8 @@
 
 <!-- Vehicles Section -->
 <div class="vehicles-section">
-    <h3>Your Vehicles</h3>
-    <p>Max Capacity: 3</p>
+    <div class="title-center"><h3>Your Vehicles</h3>
+    <p>Max Capacity: 3</p></div>
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
         <div class="vehicle-card" id="vehicle-{{ vehicle.id }}" data-color="{{ vehicle.vehicleColor }}" data-type="{{ vehicle.vehicleType }}">
@@ -37,7 +37,7 @@
 
 <!-- Sticker Status Section -->
 <div class="stickers-section">
-    <h3>Sticker Status and History</h3>
+    <div class="title-center"><h3>Sticker Status and History</h3></div>
     <div class="stickers-list">
         {% for sticker in stickers %}
         <div class="sticker-card" id="sticker-{{ sticker.id }}">
@@ -248,6 +248,9 @@
 
 <!-- Styles -->
 <style>
+    .title-center{
+        text-align: center;
+    }
     body {
         font-family: Arial, sans-serif;
         background-color: #f5f5f5;
