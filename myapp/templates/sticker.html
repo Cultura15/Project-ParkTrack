@@ -1,25 +1,61 @@
+<!DOCTYPE html>
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Home - ParkTrack{% endblock %}
+{% block title %}Sticker Management - ParkTrack{% endblock %}
 
 {% block content %}
-<!-- Main Title Section -->
+<!-- Main Header Section -->
 <div class="header-section">
-    <h2>Vehicle and Sticker Management</h2>
-    <p>Manage your vehicles and stickers conveniently in one place.</p>
+    <h2>Sticker Management</h2>
+    <p>Welcome! Easily apply for a new parking sticker, renew your existing one, and track its status with our Sticker Management system.</p>
 </div>
 
-<!-- Current Vehicles Section -->
+<!-- Vehicles Section -->
 <div class="vehicles-section">
-    <h3>Your Vehicles: </h3>
-    <div class="lowered-opacity"><h5> Max Capacity: 3</h5></div>
+    <h3>Your Vehicles</h3>
+    <p>Max Capacity: 3</p>
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
         <div class="vehicle-card" id="vehicle-{{ vehicle.id }}" data-color="{{ vehicle.vehicleColor }}" data-type="{{ vehicle.vehicleType }}">
+            <img src="{% static 'logo.png' %}" alt="Vehicle image" class="vehicle-image">
             <div class="vehicle-info">
-                <h4>{{ vehicle.vehicleManufacturer }}</h4>
-                <img src="{% static 'logo.png' %}" alt="car-image">
+                <h4>{{ vehicle.vehicleManufacturer }} {{ vehicle.vehicleType }}</h4>
+                <p>Plate num: {{ vehicle.plateNumber }}</p>
+            </div>
+        </div>
+        {% endfor %}
+        <!-- Empty Slot for Adding a New Vehicle -->
+        {% if vehicles|length < 3 %}
+        <div class="vehicle-card add-vehicle-card" onclick="showRegisterVehicleModal()">
+            <div class="add-vehicle-icon">+</div>
+            <p>Add a New Vehicle</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sticker Status Section -->
+<div class="stickers-section">
+    <h3>Sticker Status and History</h3>
+    <div class="stickers-list">
+        {% for sticker in stickers %}
+        <div class="sticker-card" id="sticker-{{ sticker.id }}">
+            <div class="sticker-info">
+                <p><strong>Vehicle Model:</strong> {{ sticker.vehicle.vehicleManufacturer }} {{ sticker.vehicle.vehicleType }}</p>
+                <p><strong>Vehicle Color:</strong> {{ sticker.vehicle.vehicleColor }}</p>
+                <p><strong>Sticker Status:</strong> 
+                    <span class="sticker-status" data-expiry-date="{{ sticker.expiryDate }}"></span>
+                </p>
+            </div>
+            <div class="sticker-actions">
+                <button class="btn-status" data-expiry-date="{{ sticker.expiryDate }}">Status</button>
+                <button class="btn-renew" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
+                <button onclick="showEditForm('{{ sticker.vehicle.id }}')" class="btn-secondary">Edit</button>
+                <form action="{% url 'delete_vehicle' sticker.vehicle.id %}" method="POST">
+                    {% csrf_token %}
+                    <button class="btn-remove">Remove</button>
+                </form>
             </div>
         </div>
         {% endfor %}
@@ -29,7 +65,7 @@
 <!-- Register New Vehicle Modal -->
 <div id="register-vehicle-modal" class="modal">
     <div class="modal-content">
-        <span class="close">&times;</span>
+        <span class="close" onclick="closeRegisterVehicleModal()">&times;</span>
         <h3>Register a New Vehicle</h3>
         <form action="{% url 'register_vehicle' %}" method="POST" class="form-layout">
             {% csrf_token %}
@@ -55,31 +91,6 @@
             </div>
             <button type="submit" class="btn-primary">Register Vehicle</button>
         </form>
-    </div>
-</div>
-
-<!-- Current Stickers Section -->
-<div class="stickers-section">
-    <h3>Current Stickers</h3>
-    <div class="stickers-grid">
-        {% for sticker in stickers %}
-        <div class="sticker-card" id="sticker-{{ sticker.id }}">
-            <div class="sticker-info">
-                <h4>Vehicle Model: {{ sticker.vehicle.vehicleManufacturer }} {{sticker.vehicle.vehicleType}}</h4>
-                <h4><p>Vehicle Color: {{sticker.vehicle.vehicleColor}}</p></h4>
-                <p>Expires on: <span class="expiry-date">{{ sticker.expiryDate }}</span></p>
-            </div>
-            <div class="sticker-actions">
-                <button class="btn-status" data-expiry-date="{{ sticker.expiryDate}}">status</button>
-                <button type="button" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
-                <button onclick="showEditForm('{{ sticker.vehicle.id }}')" class="btn-secondary">Edit</button>
-                <form action="{% url 'delete_vehicle' sticker.vehicle.id %}" method="POST" class="inline-form">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-        {% endfor %}
     </div>
 </div>
 
@@ -162,37 +173,62 @@
 
         updateVehiclesDisplay();
 
-        const renewButtons = document.querySelectorAll('.btn-status');
+        const statusElements = document.querySelectorAll('.sticker-status');
+        const statusButtons = document.querySelectorAll('.btn-status');
         const today = new Date();
-    
-        renewButtons.forEach(button => {
-            const expiryDate = new Date(button.getAttribute('data-expiry-date'));
+
+        statusElements.forEach((element, index) => {
+            const expiryDate = new Date(element.getAttribute('data-expiry-date'));
             const timeDiff = expiryDate - today;
             const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-    
-            if (daysDiff <= 7) {
+            const button = statusButtons[index];
+
+            if (daysDiff <= 0) {
+                element.style.color = 'red';
+                element.innerText = 'Expired';
                 button.style.backgroundColor = 'red';
-            } else if (daysDiff <= 30) {
+                button.innerText = 'Expired';
+            } else if (daysDiff <= 14) {
+                element.style.color = 'yellow';
+                element.innerText = 'Renew';
                 button.style.backgroundColor = 'yellow';
+                button.innerText = 'Renew';
             } else {
+                element.style.color = 'green';
+                element.innerText = 'Good';
                 button.style.backgroundColor = 'green';
+                button.innerText = 'Good';
             }
         });
     });
 
+    function showRegisterVehicleModal() {
+        const modal = document.getElementById('register-vehicle-modal');
+        modal.style.display = 'block';
+    }
+
+    function closeRegisterVehicleModal() {
+        const modal = document.getElementById('register-vehicle-modal');
+        modal.style.display = 'none';
+    }
+
     function showEditForm(vehicleId) {
         // Populate form fields based on vehicle information
-        const vehicleCard = document.querySelector(`#vehicle-${vehicleId} .vehicle-info`);
-        const manufacturer = vehicleCard.querySelector('h4').innerText;
-        const color = vehicleCard.querySelector('p:nth-child(2)').innerText.split(': ')[1];
-        const type = vehicleCard.querySelector('p:nth-child(3)').innerText.split(': ')[1];
+        const vehicleCard = document.querySelector(`#vehicle-${vehicleId}`);
+        if (vehicleCard) {
+            const manufacturer = vehicleCard.querySelector('h4').innerText;
+            const color = vehicleCard.getAttribute('data-color');
+            const type = vehicleCard.getAttribute('data-type');
 
-        document.getElementById('vehicle-id').value = vehicleId;
-        document.getElementById('edit-manufacturer').value = manufacturer;
-        document.getElementById('edit-color').value = color;
-        document.getElementById('edit-type').value = type;
-        document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
-        document.getElementById('edit-form').style.display = 'block';
+            document.getElementById('vehicle-id').value = vehicleId;
+            document.getElementById('edit-manufacturer').value = manufacturer;
+            document.getElementById('edit-color').value = color;
+            document.getElementById('edit-type').value = type;
+            document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
+            document.getElementById('edit-form').style.display = 'block';
+        } else {
+            console.error('Vehicle card not found');
+        }
     }
 
     function cancelEdit() {
@@ -212,73 +248,94 @@
 
 <!-- Styles -->
 <style>
-    .lowered-opacity {
-        opacity: 0.5;
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
     }
 
     .header-section {
         text-align: center;
         margin-bottom: 20px;
     }
-    .form-layout {
+
+    .vehicles-grid, .stickers-list {
         display: flex;
+        gap: 20px;
         flex-wrap: wrap;
-        gap: 15px;
+        justify-content: center;
+        margin: 20px 0;
     }
-    .form-group {
-        flex: 1;
-        min-width: 200px;
+
+    .vehicle-card, .sticker-card {
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        background-color: #ffffff;
+        width: 250px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    .btn-primary {
-        background-color: #007bff;
+
+    .add-vehicle-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 2px dashed #8B0000;
+    }
+
+    .add-vehicle-icon {
+        font-size: 3em;
+        color: #8B0000;
+    }
+
+    .vehicle-image {
+        width: 100%;
+        height: auto;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .sticker-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+
+    .btn-status {
+        background-color: #4CAF50;
         color: white;
         border: none;
-        padding: 8px 16px;
+        padding: 5px 10px;
         cursor: pointer;
+        border-radius: 5px;
     }
-    .btn-secondary {
-        background-color: #6c757d;
+
+    .btn-renew {
+        background-color: #FFA500;
         color: white;
         border: none;
-        padding: 8px 16px;
+        padding: 5px 10px;
         cursor: pointer;
+        border-radius: 5px;
     }
-    .btn-danger {
+
+    .btn-remove {
         background-color: #dc3545;
         color: white;
         border: none;
-        padding: 8px 16px;
+        padding: 5px 10px;
         cursor: pointer;
-    }
-    .stickers-grid{
-        display: block;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 50px;
-    }
-    .sticker-card{
-        padding: 15px;
-        border: 1px solid #ccc;
         border-radius: 5px;
-        background-color: rgb(226, 211, 226);
     }
-    .vehicles-grid{
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
+
+    .btn-status:hover, .btn-renew:hover, .btn-remove:hover {
+        opacity: 0.9;
     }
-    .vehicle-card{
-        padding: 15px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background-color: rgb(226, 211, 226);
-    }
-    .vehicle-info, .sticker-info {
-        margin-bottom: 10px;
-    }
-    .vehicle-actions, .sticker-actions {
-        display: flex;
-        gap: 10px;
-    }
+
     .modal {
         display: none;
         position: fixed;
@@ -290,6 +347,7 @@
         overflow: auto;
         background-color: rgba(0, 0, 0, 0.4);
     }
+
     .modal-content {
         background-color: #fefefe;
         margin: 15% auto;
@@ -299,18 +357,21 @@
         max-width: 500px;
         box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     }
+
     .close {
         color: #aaa;
         float: right;
         font-size: 28px;
         font-weight: bold;
     }
+
     .close:hover,
     .close:focus {
         color: black;
         text-decoration: none;
         cursor: pointer;
     }
+
     .empty-slot {
         display: flex;
         justify-content: center;
@@ -321,9 +382,11 @@
         width: 200px;
         margin: 10px;
     }
+
     .add-vehicle {
         font-size: 2em;
         color: #007bff;
     }
 </style>
+
 {% endblock %}
