@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - ParkTrack{% endblock %}
+
+{% block content %}
+<!-- Main Title Section -->
+<div class="header-section">
+    <h2>Vehicle and Sticker Management</h2>
+    <p>Manage your vehicles and stickers conveniently in one place.</p>
+</div>
+
+<!-- Register New Vehicle Section -->
+<div class="register-vehicle-section">
+    <h3>Register a New Vehicle</h3>
+    <form action="{% url 'register_vehicle' %}" method="POST" class="form-layout">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="manufacturer">Manufacturer:</label>
+            <input type="text" id="manufacturer" name="manufacturer" required>
+        </div>
+        <div class="form-group">
+            <label for="color">Color:</label>
+            <input type="text" id="color" name="color" required>
+        </div>
+        <div class="form-group">
+            <label for="type">Make:</label>
+            <input type="text" id="type" name="type" required>
+        </div>
+        <div class="form-group">
+            <label for="purchase_date">Purchase Date:</label>
+            <input type="date" id="purchase_date" name="purchase_date" required>
+        </div>
+        <div class="form-group">
+            <label for="expiry_date">Expiry Date:</label>
+            <input type="date" id="expiry_date" name="expiry_date" required>
+        </div>
+        <button type="submit" class="btn-primary">Register Vehicle</button>
+    </form>
+</div>
+
+<!-- Current Vehicles Section -->
+<div class="vehicles-section">
+    <h3>Your Vehicles: </h3>
+    <div class="lowered-opacity"><h5> Max Capacity: 3</h5></div>
+    <div class="vehicles-grid">
+        {% for vehicle in vehicles %}
+        <div class="vehicle-card" id="vehicle-{{ vehicle.id }}">
+            <div class="vehicle-info">
+                <h4>{{ vehicle.vehicleManufacturer }}</h4>
+                <p>Color: {{ vehicle.vehicleColor }}</p>
+                <p>Type: {{ vehicle.vehicleType }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Current Stickers Section -->
+<div class="stickers-section">
+    <h3>Current Stickers</h3>
+    <div class="stickers-grid">
+        {% for sticker in stickers %}
+        <div class="sticker-card" id="sticker-{{ sticker.id }}">
+            <div class="sticker-info">
+                <h4>{{ sticker.vehicle.vehicleManufacturer }}</h4>
+                <p>Expires on: <span class="expiry-date">{{ sticker.expiryDate }}</span></p>
+            </div>
+            <div class="sticker-actions">
+                <button class="btn-renew" data-expiry-date="{{ sticker.expiryDate }}" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
+                <button onclick="showEditForm('{{ sticker.vehicle.id }}')" class="btn-secondary">Edit</button>
+                <form action="{% url 'delete_vehicle' sticker.vehicle.id %}" method="POST" class="inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Edit Vehicle Form Section -->
+<div id="edit-form" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Edit Vehicle</h3>
+        <form id="vehicle-edit-form" action="" method="POST" class="form-layout">
+            {% csrf_token %}
+            <input type="hidden" name="vehicle_id" id="vehicle-id">
+            <div class="form-group">
+                <label for="edit-manufacturer">Manufacturer:</label>
+                <input type="text" id="edit-manufacturer" name="manufacturer" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-color">Color:</label>
+                <input type="text" id="edit-color" name="color" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-type">Type:</label>
+                <input type="text" id="edit-type" name="type" required>
+            </div>
+            <button type="submit" class="btn-primary">Update Vehicle</button>
+            <button type="button" onclick="cancelEdit()" class="btn-secondary">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<!-- Renew Sticker Form Section -->
+<div id="renew-form" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Renew Sticker</h3>
+        <form id="sticker-renew-form" action="" method="POST" class="form-layout">
+            {% csrf_token %}
+            <input type="hidden" name="sticker_id" id="sticker-id">
+            <div class="form-group">
+                <label for="new-expiry-date">New Expiry Date:</label>
+                <input type="date" id="new-expiry-date" name="expiry_date" required>
+            </div>
+            <button type="submit" class="btn-primary">Renew</button>
+            <button type="button" onclick="cancelRenew()" class="btn-secondary">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript Section -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const renewButtons = document.querySelectorAll('.btn-renew');
+        const today = new Date();
+    
+        renewButtons.forEach(button => {
+            const expiryDate = new Date(button.getAttribute('data-expiry-date'));
+            const timeDiff = expiryDate - today;
+            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    
+            if (daysDiff <= 7) {
+                button.style.backgroundColor = 'red';
+            } else if (daysDiff <= 30) {
+                button.style.backgroundColor = 'yellow';
+            } else {
+                button.style.backgroundColor = 'green';
+            }
+        });
+    });
+
+    function showEditForm(vehicleId) {
+        // Populate form fields based on vehicle information
+        const vehicleCard = document.querySelector(`#vehicle-${vehicleId} .vehicle-info`);
+        const manufacturer = vehicleCard.querySelector('h4').innerText;
+        const color = vehicleCard.querySelector('p:nth-child(2)').innerText.split(': ')[1];
+        const type = vehicleCard.querySelector('p:nth-child(3)').innerText.split(': ')[1];
+
+        document.getElementById('vehicle-id').value = vehicleId;
+        document.getElementById('edit-manufacturer').value = manufacturer;
+        document.getElementById('edit-color').value = color;
+        document.getElementById('edit-type').value = type;
+        document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
+        document.getElementById('edit-form').style.display = 'block';
+    }
+
+    function cancelEdit() {
+        document.getElementById('edit-form').style.display = 'none';
+    }
+
+    function showRenewForm(stickerId) {
+        document.getElementById('sticker-id').value = stickerId;
+        document.getElementById('sticker-renew-form').action = "{% url 'renew_sticker' '0' %}".replace('0', stickerId);
+        document.getElementById('renew-form').style.display = 'block';
+    }
+
+    function cancelRenew() {
+        document.getElementById('renew-form').style.display = 'none';
+    }
+</script>
+
+<!-- Styles -->
+<style>
+    .lowered-opacity {
+        opacity: 0.5;
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .form-layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    .vehicles-grid, .stickers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    .vehicle-card, .sticker-card {
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: rgb(226, 211, 226);
+    }
+    .vehicle-info, .sticker-info {
+        margin-bottom: 10px;
+    }
+    .vehicle-actions, .sticker-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+    }
+    .modal-content {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+</style>
+{% endblock %}
