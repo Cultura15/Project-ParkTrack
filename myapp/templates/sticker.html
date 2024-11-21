@@ -18,7 +18,7 @@
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
         <div class="vehicle-card" id="vehicle-{{ vehicle.id }}" data-color="{{ vehicle.vehicleColor }}" data-type="{{ vehicle.vehicleType }}">
-            <img src="{% static 'logo.png' %}" alt="Vehicle image" class="vehicle-image">
+        <div class="car-image"><img src="{% static 'car.jpg' %}" alt="Vehicle image" class="vehicle-image"></div>
             <div class="vehicle-info">
                 <h4>{{ vehicle.vehicleManufacturer }} {{ vehicle.vehicleType }}</h4>
                 <p>Plate num: {{ vehicle.plateNumber }}</p>
@@ -246,150 +246,229 @@
     }
 </script>
 
-<!-- Styles -->
 <style>
-    .title-center{
-        text-align: center;
-    }
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f5f5f5;
-        margin: 0;
-        padding: 0;
-    }
+    /* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9fafb;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
 
-    .header-section {
-        text-align: center;
-        margin-bottom: 20px;
-    }
+.title-center {
+    text-align: center;
+    margin-bottom: 10px;
+}
 
-    .vehicles-grid, .stickers-list {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin: 20px 0;
-    }
+.header-section {
+    text-align: center;
+    padding: 30px 15px;
+    background-color: #5a0a0a;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-    .vehicle-card, .sticker-card {
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
-        background-color: #ffffff;
-        width: 250px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
+.header-section h2 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+}
 
-    .add-vehicle-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border: 2px dashed #8B0000;
-    }
+.header-section p {
+    font-size: 1rem;
+    margin-top: 10px;
+    color: #e0eafc;
+}
 
-    .add-vehicle-icon {
-        font-size: 3em;
-        color: #8B0000;
-    }
+/* Sticker Section */
+.stickers-list {
+    display: flex; /* Use flexbox for alignment */
+    flex-direction: column; /* Stack the cards vertically */
+    align-items: center; /* Center the cards horizontally */
+    gap: 15px; /* Add consistent spacing between the cards */
+    width: 100%; /* Optional: Ensures full-width for the container */
+    margin: 0 auto; /* Center the container itself */
+}
 
-    .vehicle-image {
-        width: 100%;
-        height: auto;
-        border-radius: 5px;
-        margin-bottom: 10px;
-    }
+.sticker-card {
+    padding: 10px;
+    border: 1px solid #300000;
+    background-color: #f5f5f5;
+    text-align: left;
+    display: flex;
+    flex-direction: column; /* Keep the content stacked vertically */
+    width: 900px; /* Set consistent width */
+    transition: transform 0.3s, box-shadow 0.3s; /* Smoother hover animation */
+}
 
-    .sticker-actions {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 10px;
-    }
+.sticker-info {
+    margin-bottom: 10px; /* Space between the sticker info and buttons */
+}
 
-    .btn-status {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 5px;
-    }
+.sticker-actions {
+    display: flex; /* Align buttons horizontally */
+    justify-content: flex-start; /* Align buttons to the left */
+    gap: 10px; /* Space between buttons */
+}
 
-    .btn-renew {
-        background-color: #FFA500;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 5px;
-    }
+/* Vehicles Section */
+.vehicles-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+}
 
-    .btn-remove {
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 5px;
-    }
+.vehicle-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    background-color: white;
+    width: 260px; /* Set consistent width */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s; /* Smoother hover animation */
+}
 
-    .btn-status:hover, .btn-renew:hover, .btn-remove:hover {
-        opacity: 0.9;
-    }
+.vehicle-image {
+    width: 70%; /* Adjust this to control the image width (e.g., 70% of the card's width) */
+    height: auto; /* Maintain aspect ratio */
+    max-height: 100px; /* Limit the image height (optional) */
+    object-fit: contain; /* Ensure the image fits without distortion */
+    margin-bottom: 10px; /* Optional: Add space between the image and the vehicle info */
+}
 
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4);
-    }
+.vehicle-card:hover, .sticker-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
 
-    .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 500px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    }
+.add-vehicle-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #0073e6;
+    color: #0073e6;
+    cursor: pointer;
+}
 
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
+.add-vehicle-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
 
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
+.vehicle-info h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
 
-    .empty-slot {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border: 2px dashed #ccc;
-        cursor: pointer;
-        height: 100px;
-        width: 200px;
-        margin: 10px;
-    }
+.vehicle-info p {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0;
+}
 
-    .add-vehicle {
-        font-size: 2em;
-        color: #007bff;
-    }
+/* Buttons */
+.btn-status, .btn-renew, .btn-remove, .btn-primary, .btn-secondary {
+    border: none;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.btn-status {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-renew {
+    background-color: #ffc107;
+    color: white;
+}
+
+.btn-remove {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-primary {
+    background-color: #0073e6;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-status:hover, .btn-renew:hover, .btn-remove:hover, .btn-primary:hover, .btn-secondary:hover {
+    opacity: 0.9;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Sticker Status */
+.sticker-status {
+    font-weight: bold;
+    font-size: 1rem;
+    margin-right: 10px; /* Add space between the status text and buttons */
+}
+
+.sticker-status[data-expiry-date] {
+    display: inline-block;
+    margin-left: 5px;
+}
+
 </style>
+
 
 {% endblock %}
