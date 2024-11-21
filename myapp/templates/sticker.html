@@ -16,11 +16,10 @@
     <div class="lowered-opacity"><h5> Max Capacity: 3</h5></div>
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
-        <div class="vehicle-card" id="vehicle-{{ vehicle.id }}">
+        <div class="vehicle-card" id="vehicle-{{ vehicle.id }}" data-color="{{ vehicle.vehicleColor }}" data-type="{{ vehicle.vehicleType }}">
             <div class="vehicle-info">
                 <h4>{{ vehicle.vehicleManufacturer }}</h4>
-                <p>Color: {{ vehicle.vehicleColor }}</p>
-                <p>Type: {{ vehicle.vehicleType }}</p>
+                <img src="{% static 'logo.png' %}" alt="car-image">
             </div>
         </div>
         {% endfor %}
@@ -66,11 +65,13 @@
         {% for sticker in stickers %}
         <div class="sticker-card" id="sticker-{{ sticker.id }}">
             <div class="sticker-info">
-                <h4>{{ sticker.vehicle.vehicleManufacturer }}</h4>
+                <h4>Vehicle Model: {{ sticker.vehicle.vehicleManufacturer }} {{sticker.vehicle.vehicleType}}</h4>
+                <h4><p>Vehicle Color: {{sticker.vehicle.vehicleColor}}</p></h4>
                 <p>Expires on: <span class="expiry-date">{{ sticker.expiryDate }}</span></p>
             </div>
             <div class="sticker-actions">
-                <button class="btn-renew" data-expiry-date="{{ sticker.expiryDate }}" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
+                <button class="btn-status" data-expiry-date="{{ sticker.expiryDate}}">status</button>
+                <button type="button" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
                 <button onclick="showEditForm('{{ sticker.vehicle.id }}')" class="btn-secondary">Edit</button>
                 <form action="{% url 'delete_vehicle' sticker.vehicle.id %}" method="POST" class="inline-form">
                     {% csrf_token %}
@@ -161,7 +162,7 @@
 
         updateVehiclesDisplay();
 
-        const renewButtons = document.querySelectorAll('.btn-renew');
+        const renewButtons = document.querySelectorAll('.btn-status');
         const today = new Date();
     
         renewButtons.forEach(button => {
@@ -249,12 +250,23 @@
         padding: 8px 16px;
         cursor: pointer;
     }
-    .vehicles-grid, .stickers-grid {
+    .stickers-grid{
+        display: block;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 50px;
+    }
+    .sticker-card{
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: rgb(226, 211, 226);
+    }
+    .vehicles-grid{
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
     }
-    .vehicle-card, .sticker-card {
+    .vehicle-card{
         padding: 15px;
         border: 1px solid #ccc;
         border-radius: 5px;
