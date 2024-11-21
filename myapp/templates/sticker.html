@@ -17,8 +17,15 @@
     <p>Max Capacity: 3</p></div>
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
-        <div class="vehicle-card" id="vehicle-{{ vehicle.id }}" data-color="{{ vehicle.vehicleColor }}" data-type="{{ vehicle.vehicleType }}">
-        <div class="car-image"><img src="{% static 'car.jpg' %}" alt="Vehicle image" class="vehicle-image"></div>
+        <div class="vehicle-card"
+            id="vehicle-{{ vehicle.id }}"
+            data-color="{{ vehicle.vehicleColor }}"
+            data-type="{{ vehicle.vehicleType }}"
+            data-manufacturer="{{ vehicle.vehicleManufacturer }}"
+            onclick="showEditForm('{{ vehicle.id }}')">
+            <div class="car-image">
+                <img src="{% static 'car.jpg' %}" alt="Vehicle image" class="vehicle-image">
+            </div>
             <div class="vehicle-info">
                 <h4>{{ vehicle.vehicleManufacturer }} {{ vehicle.vehicleType }}</h4>
                 <p>Plate num: {{ vehicle.plateNumber }}</p>
@@ -37,7 +44,7 @@
 
 <!-- Sticker Status Section -->
 <div class="stickers-section">
-    <div class="title-center"><h3>Sticker Status and History</h3></div>
+    <div class="title-center"><h3>Sticker Status</h3></div>
     <div class="stickers-list">
         {% for sticker in stickers %}
         <div class="sticker-card" id="sticker-{{ sticker.id }}">
@@ -51,7 +58,6 @@
             <div class="sticker-actions">
                 <button class="btn-status" data-expiry-date="{{ sticker.expiryDate }}">Status</button>
                 <button class="btn-renew" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
-                <button onclick="showEditForm('{{ sticker.vehicle.id }}')" class="btn-secondary">Edit</button>
                 <form action="{% url 'delete_vehicle' sticker.vehicle.id %}" method="POST">
                     {% csrf_token %}
                     <button class="btn-remove">Remove</button>
@@ -80,14 +86,6 @@
             <div class="form-group">
                 <label for="type">Make:</label>
                 <input type="text" id="type" name="type" required>
-            </div>
-            <div class="form-group">
-                <label for="purchase_date">Purchase Date:</label>
-                <input type="date" id="purchase_date" name="purchase_date" required>
-            </div>
-            <div class="form-group">
-                <label for="expiry_date">Expiry Date:</label>
-                <input type="date" id="expiry_date" name="expiry_date" required>
             </div>
             <button type="submit" class="btn-primary">Register Vehicle</button>
         </form>
@@ -119,104 +117,20 @@
     </div>
 </div>
 
-<!-- Renew Sticker Form Section -->
-<div id="renew-form" class="modal" style="display:none;">
-    <div class="modal-content">
-        <h3>Renew Sticker</h3>
-        <form id="sticker-renew-form" action="" method="POST" class="form-layout">
-            {% csrf_token %}
-            <input type="hidden" name="sticker_id" id="sticker-id">
-            <div class="form-group">
-                <label for="new-expiry-date">New Expiry Date:</label>
-                <input type="date" id="new-expiry-date" name="expiry_date" required>
-            </div>
-            <button type="submit" class="btn-primary">Renew</button>
-            <button type="button" onclick="cancelRenew()" class="btn-secondary">Cancel</button>
-        </form>
-    </div>
-</div>
-
 <!-- JavaScript Section -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const maxVehicles = 3;
-        const vehiclesGrid = document.getElementById('vehicles-grid');
-        const registerVehicleModal = document.getElementById('register-vehicle-modal');
-        const closeModal = document.querySelector('.close');
-
-        function updateVehiclesDisplay() {
-            const vehicleCards = vehiclesGrid.querySelectorAll('.vehicle-card');
-            const currentVehicleCount = vehicleCards.length;
-            const emptySlots = maxVehicles - currentVehicleCount;
-
-            for (let i = 0; i < emptySlots; i++) {
-                const emptySlot = document.createElement('div');
-                emptySlot.classList.add('vehicle-card', 'empty-slot');
-                emptySlot.innerHTML = '<div class="add-vehicle">+</div>';
-                emptySlot.style.cursor = 'pointer';
-                emptySlot.addEventListener('click', function() {
-                    registerVehicleModal.style.display = 'block';
-                });
-                vehiclesGrid.appendChild(emptySlot);
-            }
-        }
-
-        closeModal.addEventListener('click', function() {
-            registerVehicleModal.style.display = 'none';
-        });
-
-        window.addEventListener('click', function(event) {
-            if (event.target == registerVehicleModal) {
-                registerVehicleModal.style.display = 'none';
-            }
-        });
-
-        updateVehiclesDisplay();
-
-        const statusElements = document.querySelectorAll('.sticker-status');
-        const statusButtons = document.querySelectorAll('.btn-status');
-        const today = new Date();
-
-        statusElements.forEach((element, index) => {
-            const expiryDate = new Date(element.getAttribute('data-expiry-date'));
-            const timeDiff = expiryDate - today;
-            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-            const button = statusButtons[index];
-
-            if (daysDiff <= 0) {
-                element.style.color = 'red';
-                element.innerText = 'Expired';
-                button.style.backgroundColor = 'red';
-                button.innerText = 'Expired';
-            } else if (daysDiff <= 14) {
-                element.style.color = 'yellow';
-                element.innerText = 'Renew';
-                button.style.backgroundColor = 'yellow';
-                button.innerText = 'Renew';
-            } else {
-                element.style.color = 'green';
-                element.innerText = 'Good';
-                button.style.backgroundColor = 'green';
-                button.innerText = 'Good';
-            }
-        });
-    });
-
     function showRegisterVehicleModal() {
-        const modal = document.getElementById('register-vehicle-modal');
-        modal.style.display = 'block';
+        document.getElementById('register-vehicle-modal').style.display = 'block';
     }
 
     function closeRegisterVehicleModal() {
-        const modal = document.getElementById('register-vehicle-modal');
-        modal.style.display = 'none';
+        document.getElementById('register-vehicle-modal').style.display = 'none';
     }
 
     function showEditForm(vehicleId) {
-        // Populate form fields based on vehicle information
         const vehicleCard = document.querySelector(`#vehicle-${vehicleId}`);
         if (vehicleCard) {
-            const manufacturer = vehicleCard.querySelector('h4').innerText;
+            const manufacturer = vehicleCard.getAttribute('data-manufacturer');
             const color = vehicleCard.getAttribute('data-color');
             const type = vehicleCard.getAttribute('data-type');
 
@@ -224,6 +138,7 @@
             document.getElementById('edit-manufacturer').value = manufacturer;
             document.getElementById('edit-color').value = color;
             document.getElementById('edit-type').value = type;
+
             document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
             document.getElementById('edit-form').style.display = 'block';
         } else {
@@ -233,16 +148,6 @@
 
     function cancelEdit() {
         document.getElementById('edit-form').style.display = 'none';
-    }
-
-    function showRenewForm(stickerId) {
-        document.getElementById('sticker-id').value = stickerId;
-        document.getElementById('sticker-renew-form').action = "{% url 'renew_sticker' '0' %}".replace('0', stickerId);
-        document.getElementById('renew-form').style.display = 'block';
-    }
-
-    function cancelRenew() {
-        document.getElementById('renew-form').style.display = 'none';
     }
 </script>
 
