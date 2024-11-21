@@ -10,40 +10,11 @@
     <p>Manage your vehicles and stickers conveniently in one place.</p>
 </div>
 
-<!-- Register New Vehicle Section -->
-<div class="register-vehicle-section">
-    <h3>Register a New Vehicle</h3>
-    <form action="{% url 'register_vehicle' %}" method="POST" class="form-layout">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="manufacturer">Manufacturer:</label>
-            <input type="text" id="manufacturer" name="manufacturer" required>
-        </div>
-        <div class="form-group">
-            <label for="color">Color:</label>
-            <input type="text" id="color" name="color" required>
-        </div>
-        <div class="form-group">
-            <label for="type">Make:</label>
-            <input type="text" id="type" name="type" required>
-        </div>
-        <div class="form-group">
-            <label for="purchase_date">Purchase Date:</label>
-            <input type="date" id="purchase_date" name="purchase_date" required>
-        </div>
-        <div class="form-group">
-            <label for="expiry_date">Expiry Date:</label>
-            <input type="date" id="expiry_date" name="expiry_date" required>
-        </div>
-        <button type="submit" class="btn-primary">Register Vehicle</button>
-    </form>
-</div>
-
 <!-- Current Vehicles Section -->
 <div class="vehicles-section">
     <h3>Your Vehicles: </h3>
     <div class="lowered-opacity"><h5> Max Capacity: 3</h5></div>
-    <div class="vehicles-grid">
+    <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
         <div class="vehicle-card" id="vehicle-{{ vehicle.id }}">
             <div class="vehicle-info">
@@ -53,6 +24,38 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+</div>
+
+<!-- Register New Vehicle Modal -->
+<div id="register-vehicle-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Register a New Vehicle</h3>
+        <form action="{% url 'register_vehicle' %}" method="POST" class="form-layout">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer:</label>
+                <input type="text" id="manufacturer" name="manufacturer" required>
+            </div>
+            <div class="form-group">
+                <label for="color">Color:</label>
+                <input type="text" id="color" name="color" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Make:</label>
+                <input type="text" id="type" name="type" required>
+            </div>
+            <div class="form-group">
+                <label for="purchase_date">Purchase Date:</label>
+                <input type="date" id="purchase_date" name="purchase_date" required>
+            </div>
+            <div class="form-group">
+                <label for="expiry_date">Expiry Date:</label>
+                <input type="date" id="expiry_date" name="expiry_date" required>
+            </div>
+            <button type="submit" class="btn-primary">Register Vehicle</button>
+        </form>
     </div>
 </div>
 
@@ -124,6 +127,40 @@
 <!-- JavaScript Section -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const maxVehicles = 3;
+        const vehiclesGrid = document.getElementById('vehicles-grid');
+        const registerVehicleModal = document.getElementById('register-vehicle-modal');
+        const closeModal = document.querySelector('.close');
+
+        function updateVehiclesDisplay() {
+            const vehicleCards = vehiclesGrid.querySelectorAll('.vehicle-card');
+            const currentVehicleCount = vehicleCards.length;
+            const emptySlots = maxVehicles - currentVehicleCount;
+
+            for (let i = 0; i < emptySlots; i++) {
+                const emptySlot = document.createElement('div');
+                emptySlot.classList.add('vehicle-card', 'empty-slot');
+                emptySlot.innerHTML = '<div class="add-vehicle">+</div>';
+                emptySlot.style.cursor = 'pointer';
+                emptySlot.addEventListener('click', function() {
+                    registerVehicleModal.style.display = 'block';
+                });
+                vehiclesGrid.appendChild(emptySlot);
+            }
+        }
+
+        closeModal.addEventListener('click', function() {
+            registerVehicleModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target == registerVehicleModal) {
+                registerVehicleModal.style.display = 'none';
+            }
+        });
+
+        updateVehiclesDisplay();
+
         const renewButtons = document.querySelectorAll('.btn-renew');
         const today = new Date();
     
@@ -231,19 +268,50 @@
         gap: 10px;
     }
     .modal {
+        display: none;
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
         z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
     }
     .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .empty-slot {
         display: flex;
-        flex-direction: column;
-        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        border: 2px dashed #ccc;
+        cursor: pointer;
+        height: 100px;
+        width: 200px;
+        margin: 10px;
+    }
+    .add-vehicle {
+        font-size: 2em;
+        color: #007bff;
     }
 </style>
 {% endblock %}
