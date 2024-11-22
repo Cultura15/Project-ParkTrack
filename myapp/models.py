@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from datetime import date
 
 # Custom User model
 class User(AbstractUser):
@@ -19,36 +20,34 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-
-class Sticker(models.Model):
-    stickerId = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    purchaseDate = models.DateField()
-    expiryDate = models.DateField()
+    
+    
+    
+    ### ARTEUELA
 
 class Vehicle(models.Model):
-    VEHICLE_TYPES = [
-        ('2 wheels', '2 Wheels'),
-        ('4 wheels', '4 Wheels'),
-    ]
-    vehicleId = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    sticker = models.ForeignKey(Sticker, on_delete=models.SET_NULL, null=True)
-    vehicleManufacturer = models.CharField(max_length=50)
-    vehicleColor = models.CharField(max_length=20)
-    vehicleType = models.CharField(max_length=10, choices=VEHICLE_TYPES)
+    vehicleManufacturer = models.CharField(max_length=100)
+    vehicleColor = models.CharField(max_length=50)
+    vehicleType = models.CharField(max_length=50)
 
-class ParkingArea(models.Model):
-    parkingArea_id = models.AutoField(primary_key=True)
-    parkingLocation = models.CharField(max_length=255)
+    def __str__(self):
+        return f"{self.vehicleManufacturer} - {self.vehicleColor} - {self.vehicleType}"
 
-class ParkingLot(models.Model):
-    PARKING_STATUS = [
-        ('occupied', 'Occupied'),
-        ('vacant', 'Vacant'),
-    ]
-    parkingLot_id = models.AutoField(primary_key=True)
-    parkingArea = models.ForeignKey(ParkingArea, on_delete=models.CASCADE)
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True)
-    parkingLotNumber = models.IntegerField()
-    parkingLotStatus = models.CharField(max_length=10, choices=PARKING_STATUS)
+    class Meta:
+        db_table = 'myapp_vehicle'  # Custom table name, optional
+        verbose_name = 'vehicle'
+        verbose_name_plural = 'vehicles'
+
+
+class Sticker(models.Model):
+    purchaseDate = models.DateField(default=date.today)
+    expiryDate = models.DateField(default=date.today)  # Set a default value
+    vehicle = models.ForeignKey(Vehicle, null=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Sticker - {self.purchaseDate} to {self.expiryDate}"
+
+    class Meta:
+        db_table = 'myapp_sticker'  # Custom table name, optional
+        verbose_name = 'sticker'
+        verbose_name_plural = 'stickers'

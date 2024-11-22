@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update User</title>
+    <link rel="stylesheet" href="{% static 'user_list.css' %}">
+</head>
+<body>
+    <h1>Update User</h1>
+    <form method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="userId" value="{{ user.userId }}">
+        <label for="fname">First Name:</label>
+        <input type="text" name="fname" value="{{ user.fname }}">
+    
+        <label for="lname">Last Name:</label>
+        <input type="text" name="lname" value="{{ user.lname }}">
+    
+        <label for="email">Email:</label>
+        <input type="email" name="email" value="{{ user.email }}">
+    
+        <label for="gender">Gender:</label>
+        <input type="text" name="gender" value="{{ user.gender }}">
+    
+        <label for="address">Address:</label>
+        <input type="text" name="address" value="{{ user.address }}">
+    
+        <label for="contactNo">Contact Number:</label>
+        <input type="text" name="contactNo" value="{{ user.contactNo }}">
+    
+        <label for="accountType">Account Type:</label>
+        <input type="text" name="accountType" value="{{ user.accountType }}">
+    
+        <button type="submit">Update User</button>
+    </form>
+
+    <script>
+        // Function to populate the form fields based on user ID
+        function populateForm() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('userId');
+
+            fetch(`/api/users/${userId}/`)
+                .then(response => response.json())
+                .then(user => {
+                    document.getElementById('userId').value = user.userId;
+                    document.getElementById('fname').value = user.fname;
+                    document.getElementById('lname').value = user.lname;
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('gender').value = user.gender;
+                    document.getElementById('address').value = user.address;
+                    document.getElementById('contactNo').value = user.contactNo;
+                    document.getElementById('accountType').value = user.accountType;
+                });
+        }
+
+        function submitUpdate() {
+            const userId = document.getElementById('userId').value;
+            const fname = document.getElementById('fname').value;
+            const lname = document.getElementById('lname').value;
+            const email = document.getElementById('email').value;
+            const gender = document.getElementById('gender').value;
+            const address = document.getElementById('address').value;
+            const contactNo = document.getElementById('contactNo').value;
+            const accountType = document.getElementById('accountType').value;
+
+            fetch(`/api/users/${userId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fname: fname || undefined,
+                    lname: lname || undefined,
+                    email: email || undefined,
+                    gender: gender || undefined,
+                    address: address || undefined,
+                    contactNo: contactNo || undefined,
+                    accountType: accountType || undefined,
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('User updated successfully!');
+                    window.location.href = '/path/to/user_list'; // Redirect to the user list page
+                } else {
+                    alert('Error updating user');
+                }
+            });
+        }
+
+        // Call populateForm when the page loads
+        window.onload = populateForm;
+    </script>
+</body>
+</html>

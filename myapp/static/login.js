@@ -8,19 +8,27 @@ document.getElementById('login-form').onsubmit = async function(event) {
         const response = await fetch('/api/login/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(data) // Convert the object to JSON
         });
 
         const result = await response.json();
-        console.log(result);
+        console.log('API Response:', result); // Log the response to the console
 
         // Handle response
         if (response.ok) {
-            alert('Login successful!');
-            // Redirect to a dashboard or homepage
-            window.location.href = '/api/menu/'; // Change to your desired redirect
+            // Check if userId exists in the result
+            if (result.user && result.user.userId) {
+                const userId = result.user.userId;
+                console.log('userId:', userId);  // Check userId in the console
+                localStorage.setItem('userId', userId);  // Save the userId to localStorage
+
+                alert('Login successful!');
+                window.location.href = '/menu/';
+            } else {
+                alert('userId is missing in the response');
+            }
         } else {
             alert(`Error: ${result.error || 'Login failed'}`);
         }

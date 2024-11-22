@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - ParkTrack{% endblock %}
+
+{% block content %}
+<!-- Main Title Section -->
+<div class="header-section">
+    <img src="{% static 'stickerManage3.png' %}" alt="sm" class="header-image">
+</div>
+
+<!-- Current Vehicles Section -->
+<div class="vehicles-section">
+    <h3>Your Vehicles: </h3>
+    <div class="lowered-opacity"><h5> Max Capacity: 3</h5></div>
+    <div class="vehicles-grid" id="vehicles-grid">
+        {% for vehicle in vehicles %}
+        <div class="vehicle-card" id="vehicle-{{ vehicle.id }}">
+            <div class="vehicle-info">
+                <h4>{{ vehicle.vehicleManufacturer }}</h4>
+                <p>Color: {{ vehicle.vehicleColor }}</p>
+                <p>Type: {{ vehicle.vehicleType }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Register New Vehicle Modal -->
+<div id="register-vehicle-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Register a New Vehicle</h3>
+        <form action="{% url 'register_vehicle' %}" method="POST" class="form-layout">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer:</label>
+                <input type="text" id="manufacturer" name="manufacturer" required>
+            </div>
+            <div class="form-group">
+                <label for="color">Color:</label>
+                <input type="text" id="color" name="color" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Make:</label>
+                <input type="text" id="type" name="type" required>
+            </div>
+            <div class="form-group">
+                <label for="purchase_date">Purchase Date:</label>
+                <input type="date" id="purchase_date" name="purchase_date" required>
+            </div>
+            <div class="form-group">
+                <label for="expiry_date">Expiry Date:</label>
+                <input type="date" id="expiry_date" name="expiry_date" required>
+            </div>
+            <button type="submit" class="btn-primary">Register Vehicle</button>
+        </form>
+    </div>
+</div>
+
+<!-- Current Stickers Section -->
+<div class="stickers-section">
+    <h3>Current Stickers</h3>
+    <div class="stickers-grid">
+        {% for sticker in stickers %}
+        <div class="sticker-card" id="sticker-{{ sticker.id }}">
+            <div class="sticker-info">
+                <h4>{{ sticker.vehicle.vehicleManufacturer }}</h4>
+                <p>Expires on: <span class="expiry-date">{{ sticker.expiryDate }}</span></p>
+            </div>
+            <div class="sticker-actions">
+                <button class="btn-renew" data-expiry-date="{{ sticker.expiryDate }}" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
+                <button onclick="showEditForm('{{ sticker.vehicle.id }}')" class="btn-secondary">Edit</button>
+                <form action="{% url 'delete_vehicle' sticker.vehicle.id %}" method="POST" class="inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Edit Vehicle Form Section -->
+<div id="edit-form" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Edit Vehicle</h3>
+        <form id="vehicle-edit-form" action="" method="POST" class="form-layout">
+            {% csrf_token %}
+            <input type="hidden" name="vehicle_id" id="vehicle-id">
+            <div class="form-group">
+                <label for="edit-manufacturer">Manufacturer:</label>
+                <input type="text" id="edit-manufacturer" name="manufacturer" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-color">Color:</label>
+                <input type="text" id="edit-color" name="color" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-type">Type:</label>
+                <input type="text" id="edit-type" name="type" required>
+            </div>
+            <button type="submit" class="btn-primary">Update Vehicle</button>
+            <button type="button" onclick="cancelEdit()" class="btn-secondary">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<!-- Renew Sticker Form Section -->
+<div id="renew-form" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Renew Sticker</h3>
+        <form id="sticker-renew-form" action="" method="POST" class="form-layout">
+            {% csrf_token %}
+            <input type="hidden" name="sticker_id" id="sticker-id">
+            <div class="form-group">
+                <label for="new-expiry-date">New Expiry Date:</label>
+                <input type="date" id="new-expiry-date" name="expiry_date" required>
+            </div>
+            <button type="submit" class="btn-primary">Renew</button>
+            <button type="button" onclick="cancelRenew()" class="btn-secondary">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript Section -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const maxVehicles = 3;
+        const vehiclesGrid = document.getElementById('vehicles-grid');
+        const registerVehicleModal = document.getElementById('register-vehicle-modal');
+        const closeModal = document.querySelector('.close');
+
+        function updateVehiclesDisplay() {
+            const vehicleCards = vehiclesGrid.querySelectorAll('.vehicle-card');
+            const currentVehicleCount = vehicleCards.length;
+            const emptySlots = maxVehicles - currentVehicleCount;
+
+            for (let i = 0; i < emptySlots; i++) {
+                const emptySlot = document.createElement('div');
+                emptySlot.classList.add('vehicle-card', 'empty-slot');
+                emptySlot.innerHTML = '<div class="add-vehicle">+</div>';
+                emptySlot.style.cursor = 'pointer';
+                emptySlot.addEventListener('click', function() {
+                    registerVehicleModal.style.display = 'block';
+                });
+                vehiclesGrid.appendChild(emptySlot);
+            }
+        }
+
+        closeModal.addEventListener('click', function() {
+            registerVehicleModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target == registerVehicleModal) {
+                registerVehicleModal.style.display = 'none';
+            }
+        });
+
+        updateVehiclesDisplay();
+
+        const renewButtons = document.querySelectorAll('.btn-renew');
+        const today = new Date();
+    
+        renewButtons.forEach(button => {
+            const expiryDate = new Date(button.getAttribute('data-expiry-date'));
+            const timeDiff = expiryDate - today;
+            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    
+            if (daysDiff <= 7) {
+                button.style.backgroundColor = 'red';
+            } else if (daysDiff <= 30) {
+                button.style.backgroundColor = 'yellow';
+            } else {
+                button.style.backgroundColor = 'green';
+            }
+        });
+    });
+
+    function showEditForm(vehicleId) {
+        // Populate form fields based on vehicle information
+        const vehicleCard = document.querySelector(`#vehicle-${vehicleId} .vehicle-info`);
+        const manufacturer = vehicleCard.querySelector('h4').innerText;
+        const color = vehicleCard.querySelector('p:nth-child(2)').innerText.split(': ')[1];
+        const type = vehicleCard.querySelector('p:nth-child(3)').innerText.split(': ')[1];
+
+        document.getElementById('vehicle-id').value = vehicleId;
+        document.getElementById('edit-manufacturer').value = manufacturer;
+        document.getElementById('edit-color').value = color;
+        document.getElementById('edit-type').value = type;
+        document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
+        document.getElementById('edit-form').style.display = 'block';
+    }
+
+    function cancelEdit() {
+        document.getElementById('edit-form').style.display = 'none';
+    }
+
+    function showRenewForm(stickerId) {
+        document.getElementById('sticker-id').value = stickerId;
+        document.getElementById('sticker-renew-form').action = "{% url 'renew_sticker' '0' %}".replace('0', stickerId);
+        document.getElementById('renew-form').style.display = 'block';
+    }
+
+    function cancelRenew() {
+        document.getElementById('renew-form').style.display = 'none';
+    }
+</script>
+
+<!-- Styles -->
+<style>
+    /* Header Section */
+    .header-section {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        height: 150px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #600000;
+        color: white;
+        z-index: 1000;
+        padding: 0;
+    }
+    
+    .header-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+   /* Vehicles Section */
+   .vehicles-section {
+        margin-top: 200px; /* Adjusted to position below the header */
+        padding: 20px;
+        text-align: center;
+    }
+    
+    /* Updated .vehicles-grid for horizontal alignment */
+    .vehicles-grid {
+        display: flex; /* Use Flexbox for horizontal alignment */
+        justify-content: flex-start; /* Align cards to the left */
+        gap: 20px; /* Add spacing between cards */
+        flex-wrap: wrap; /* Allow wrapping to the next line if needed */
+        padding: 10px;
+    }
+    
+    /* Vehicle Card */
+    .vehicle-card {
+        background-color: white;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 250px; /* Fixed card width for consistent sizing */
+        text-align: left; /* Align card content to the left */
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    /* Additional Styling */
+    .form-layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    
+    /* Grid Layout for Stickers */
+    .stickers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .vehicle-info, .sticker-info {
+        margin-bottom: 10px;
+    }
+    
+    .vehicle-actions, .sticker-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .vehicle-card, .sticker-card {
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: rgb(226, 211, 226);
+    }
+    
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    /* Empty Slot Styles */
+    .empty-slot {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px dashed #ccc;
+        cursor: pointer;
+        height: 100px;
+        width: 200px;
+        margin: 10px;
+    }
+    
+    .add-vehicle {
+        font-size: 2em;
+        color: #007bff;
+    }
+    
+    /* Lowered Opacity Section */
+    .lowered-opacity {
+        opacity: 0.5;
+    }
+    
+    .lowered-opacity h5 {
+        margin-top: 100px;
+    }
+    </style>
+    
+{% endblock %}

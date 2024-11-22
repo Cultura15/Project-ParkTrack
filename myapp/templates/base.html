@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'menu.css' %}">
+    <title>{% block title %}ParkTrack{% endblock %}</title>
+    {% load static %}
+    <style>
+      body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        h1, h2, h3, p, span {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Style for the new sidebar */
+        .new-sidebar {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #4D0303;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 5px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        /* Style for the list inside the new sidebar */
+        .new-sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .new-sidebar ul li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .new-sidebar ul li a {
+            text-decoration: none;
+            color: black;
+        }
+
+        .new-sidebar ul li:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Style for the new sidebar on the left (for iconMenu) */
+        .new-sidebar-left {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 140px;
+            width: 250px;
+            height: 100%;
+            background: linear-gradient(to bottom, #E29E19 0%, #700D0D 60%, #FFFFFF 100%);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header Section -->
+            <header class="header">
+                <div class="logo">
+                    <img src="{% static 'logo1.png' %}" alt="Logo">
+                </div>
+                <h1>ParkTrack -CIT-</h1>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search">
+                </div>
+                <!-- Dropdown Icon that triggers the right sidebar -->
+                <div class="acc-icon" onclick="toggleRightSidebar()">
+                    <img src="{% static 'dropdown.png' %}" alt="drop">
+                </div>
+            </header>
+
+    <!-- Main Content Wrapper for pages extending base.html -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+      <!-- Sidebar Menu Section -->
+      <aside class="sidebar">
+        <div class="user-info">
+            <span id="user-fname">{{ user_fname }}</span>
+        </div>
+        <nav class="nav-menu">
+            <div class="small-container">
+                <a href="http://127.0.0.1:8000/menu/" class="nav-item" style="margin-top: 30px;">
+                    <img src="{% static 'iconHome.png' %}" alt="icon1">
+                </a>
+                <!-- Menu Icon that triggers the left sidebar -->
+                <div class="nav-item" style="margin-top: 30px;" onclick="toggleLeftSidebar()">
+                    <img src="{% static 'iconMenu.png' %}" alt="icon2" class="icon-menu">
+                </div>
+                <a href="#" class="nav-item" style="margin-top: 30px;">
+                    <img src="{% static 'iconNews.png' %}" alt="icon3">
+                </a>
+                <div class="nav-item iconOut" style="margin-top: 30px;">
+                    <img src="{% static 'iconOut.png' %}" alt="icon4">
+                </div>
+            </div>
+        </nav>
+    </aside>
+</main>
+
+<!-- Right Sidebar (Dropdown Sidebar) -->
+<div class="new-sidebar">
+    <div class="user-profile">
+        <div class="profile-picture">
+            <img src="{% static 'profile.png' %}" alt="User Profile Picture">
+        </div>
+        <div class="profile-info">
+            <h3 id="user-name">{{ user_name }}</h3>
+            <p id="user-role">{{ user_role }}</p>
+        </div>
+    </div>
+    <hr>
+    <div class="vehicle-info">
+        <div class="vehicle-image">
+            <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image">
+        </div>
+        <div class="vehicle-details">
+            <h4 id="vehicle-name">Vehicle Name: Toyota Corolla</h4>
+            <p id="vehicle-model">Model: 2020</p>
+            <p id="vehicle-plate">Plate Number: ABC-1234</p>
+        </div>
+    </div>
+</div>
+
+<!-- Left Sidebar (Menu Sidebar) -->
+<div class="new-sidebar-left">
+    <div class="menu">
+        <h1>Menu</h1>
+    </div>
+    <hr>
+    <div class="list">
+        <ul>
+            <a href="http://127.0.0.1:8000/api/parkingMap/">Update Parking Status</a>
+            <a href="http://127.0.0.1:8000/api/sticker_management/">Sticker Management</a>
+            <a>Parking Reservation</a>
+            <a>Account Settings</a>
+            <a>About us</a>
+        </ul>
+    </div>
+</div>
+
+</div>
+
+   <!-- Inline JavaScript -->
+   <script>
+    function toggleRightSidebar() {
+        const sidebarRight = document.querySelector('.new-sidebar');
+        sidebarRight.style.display = (sidebarRight.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function toggleLeftSidebar() {
+        const sidebarLeft = document.querySelector('.new-sidebar-left');
+        sidebarLeft.style.display = (sidebarLeft.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // Close the sidebars if clicked outside
+    document.addEventListener('click', function(event) {
+        const newSidebarRight = document.querySelector('.new-sidebar');
+        const newSidebarLeft = document.querySelector('.new-sidebar-left');
+        const accIcon = document.querySelector('.acc-icon');
+        const iconMenu = document.querySelector('.icon-menu');
+
+        if (!accIcon.contains(event.target) && !newSidebarRight.contains(event.target) &&
+            !iconMenu.contains(event.target) && !newSidebarLeft.contains(event.target)) {
+            newSidebarRight.style.display = 'none';
+            newSidebarLeft.style.display = 'none';
+        }
+    });
+
+    // Fetch user details on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const userId = localStorage.getItem('userId'); // Get userId from localStorage
+
+        if (userId) {
+            fetch(`http://127.0.0.1:8000/api/get_user_details/?userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                console.log('User data:', data);  // Log data to see if it's coming through
+                if (data.user) {
+                    document.getElementById('user-name').textContent = `${data.user.fname} ${data.user.lname}`;
+                    document.getElementById('user-fname').textContent = `Hi, ${data.user.fname}`;
+                    document.getElementById('user-role').textContent = `Role: ${data.user.accountType}`;
+                } else {
+                    console.error('User not found');
+                }
+            })
+                .catch(error => console.error('Error fetching user details:', error));
+        } else {
+            console.error('No userId found in localStorage');
+        }
+    });
+
+    document.querySelector('.iconOut').addEventListener('click', function (event) {
+                event.preventDefault(); // Prevent default anchor action
+                // Clear user session or local storage
+                localStorage.removeItem('userId'); // Remove the userId or other session data
+                console.log('User logged out successfully.');
+
+                // Redirect to the login page
+                window.location.href = 'http://127.0.0.1:8000/api/login/';
+            });
+
+</script>
+
+</body>
+</html>
