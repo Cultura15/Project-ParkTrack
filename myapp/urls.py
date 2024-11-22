@@ -16,5 +16,6 @@ urlpatterns = [
     path('delete_vehicle/<int:vehicle_id>/', views.delete_vehicle, name='delete_vehicle'),
     path('renew_sticker/<int:sticker_id>/', views.renew_sticker, name='renew_sticker'),
     path('sticker_management/', views.sticker_management, name='sticker_management'),
+    path('about_us/', views.about_us, name='about_us'),
     
 ]

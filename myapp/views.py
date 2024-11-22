@@ -187,6 +187,9 @@ def renew_sticker(request, sticker_id):
         return redirect('sticker_management')
     return render(request, 'renew_sticker.html', {'sticker': sticker})
 
+def about_us(request):
+    return render(request, 'about_us.html')
+
 
 
 
