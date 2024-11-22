@@ -8,7 +8,8 @@ document.getElementById('login-form').onsubmit = async function(event) {
         const response = await fetch('/api/login/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+               
             },
             body: JSON.stringify(data) // Convert the object to JSON
         });
@@ -20,7 +21,7 @@ document.getElementById('login-form').onsubmit = async function(event) {
         if (response.ok) {
             alert('Login successful!');
             // Redirect to a dashboard or homepage
-            window.location.href = '/api/menu/'; // Change to your desired redirect
+            window.location.href = '/menu/'; 
         } else {
             alert(`Error: ${result.error || 'Login failed'}`);
         }

@@ -1,0 +1,51 @@
+/* Sticker CSS - extracted from inline styles */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+header {
+    background-color: #8B0000;
+    color: #fff;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header img {
+    height: 50px;
+}
+
+header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.search-bar {
+    background-color: #300000;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 5px;
+}
+
+.search-bar input {
+    width: 200px;
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+}
+
+.search-bar button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    background-color: #FFA500;
+    cursor: pointer;
+}

@@ -1,0 +1,15 @@
+<!-- profile_update.html -->
+
+{% extends 'base_generic.html' %}
+
+{% block content %}
+  <h1>Update Profile</h1>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Changes</button>
+  </form>
+  
+  <a href="{% url 'account' %}">Back to Account</a>
+{% endblock %}
