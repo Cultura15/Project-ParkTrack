@@ -9,10 +9,15 @@ urlpatterns = [
     path('update_user/', views.update_user, name='update_user'),
     path('get_user_details/', views.get_user_details, name='get_user_details'), 
     path('parkingMap/', views.parkingMap, name='parkingMap'), 
+    path('aboutUs/', views.aboutUs, name='aboutUs'), 
+    path('parkReserve/', views.parkReserve, name='parkReserve'), 
+    path('accountSettings/', views.accountSettings, name='accountSettings'), 
+    path('vehicle-info/', views.base_view, name='vehicle-info-api'),
+ 
  
 
     # artezuela
-     path('sticker_management/', views.sticker, name='sticker'),
+    path('sticker_management/', views.sticker, name='sticker'),
     path('sticker_management/', views.sticker_management, name='sticker_management'),
     path('register_vehicle/', views.register_vehicle, name='register_vehicle'),
     path('edit_vehicle/<int:vehicle_id>/', views.edit_vehicle, name='edit_vehicle'),

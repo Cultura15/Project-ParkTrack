@@ -134,9 +134,9 @@
                     <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image">
                 </div>
                 <div class="vehicle-details">
-                    <h4 id="vehicle-name">Vehicle Name: Toyota Corolla</h4>
-                    <p id="vehicle-model">Model: 2020</p>
-                    <p id="vehicle-plate">Plate Number: ABC-1234</p>
+                    <h4 id="vehicle-name">Vehicle Name: {{ vehicle_info.manufacturer }}</h4>
+                    <p id="vehicle-model">Model: {{ vehicle_info.type }}</p>
+                    <p id="vehicle-plate">Plate Number: </p>
                 </div>
             </div>
         </div>
@@ -151,9 +151,9 @@
                 <ul>
                     <a href="http://127.0.0.1:8000/api/parkingMap/">Update Parking Status</a>
                     <a href="http://127.0.0.1:8000/api/sticker_management/">Sticker Management</a>
-                    <a>Parking Reservation</a>
-                    <a>Account Settings</a>
-                    <a>About us</a>
+                    <a href="http://127.0.0.1:8000/api/parkReserve/">Parking Reservation</a>
+                    <a href="http://127.0.0.1:8000/api/accountSettings/">Account Settings</a>
+                    <a href ="http://127.0.0.1:8000/api/aboutUs/">About us</a>
                 </ul>
             </div>
         </div>
@@ -218,6 +218,31 @@
                 // Redirect to the login page
                 window.location.href = 'http://127.0.0.1:8000/api/login/';
             });
+
+
+            // Fetch vehicle details on page load
+ document.addEventListener('DOMContentLoaded', function() {
+    // Get vehicle information from the backend context
+    const vehicleInfo = {
+        manufacturer: "{{ vehicle_info.manufacturer }}",
+        type: "{{ vehicle_info.type }}",
+        plateNumber: "{{ vehicle_info.plate_number }}",
+        color: "{{ vehicle_info.color }}"
+    };
+
+    // Update the HTML with vehicle details
+    const vehicleNameElement = document.getElementById('vehicle-name');
+    const vehicleModelElement = document.getElementById('vehicle-model');
+    const vehiclePlateElement = document.getElementById('vehicle-plate');
+    const vehicleImageElement = document.getElementById('vehicle-image');
+
+    // Update vehicle name, model, and plate number
+    vehicleNameElement.textContent = `Vehicle Name: ${vehicleInfo.manufacturer}`;
+    vehicleModelElement.textContent = `Model: ${vehicleInfo.type}`;
+    vehiclePlateElement.textContent = `Plate Number: ${vehicleInfo.plateNumber}`;
+
+  
+});
 
     </script>
 </body>

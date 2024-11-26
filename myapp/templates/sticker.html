@@ -1,25 +1,70 @@
+<!DOCTYPE html>
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Home - ParkTrack{% endblock %}
+{% block title %}Sticker Management - ParkTrack{% endblock %}
 
 {% block content %}
-<!-- Main Title Section -->
+<!-- Main Header Section -->
 <div class="header-section">
     <img src="{% static 'stickerManage3.png' %}" alt="sm" class="header-image">
-</div>
+</div>  
 
-<!-- Current Vehicles Section -->
+<!-- Vehicles Section -->
 <div class="vehicles-section">
-    <h3>Your Vehicles: </h3>
-    <div class="lowered-opacity"><h5> Max Capacity: 3</h5></div>
+    <div class="title-center"><h3>Your Vehicles</h3><br><br>
+    <h2>Your Vehicles:</h1>
+    <p>Max Capacity: 3</p></div>
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
-        <div class="vehicle-card" id="vehicle-{{ vehicle.id }}">
+        <div class="vehicle-card"
+            id="vehicle-{{ vehicle.id }}"
+            data-color="{{ vehicle.vehicleColor }}"
+            data-type="{{ vehicle.vehicleType }}"
+            data-manufacturer="{{ vehicle.vehicleManufacturer }}"
+            onclick="showEditForm('{{ vehicle.id }}')">
+            <div class="car-image">
+                {% if vehicle.vehicleImage %}
+                <img src="{{ vehicle.vehicleImage.url }}" alt="Vehicle Image">
+           
+              
+                {% endif %}
+            </div>
             <div class="vehicle-info">
-                <h4>{{ vehicle.vehicleManufacturer }}</h4>
-                <p>Color: {{ vehicle.vehicleColor }}</p>
-                <p>Type: {{ vehicle.vehicleType }}</p>
+                <h4>{{ vehicle.vehicleManufacturer }} {{ vehicle.vehicleType }}</h4>
+            </div>
+        </div>
+        {% endfor %}
+        <!-- Empty Slot for Adding a New Vehicle -->
+        {% if vehicles|length < 3 %}
+        <div class="vehicle-card add-vehicle-card" onclick="showRegisterVehicleModal()">
+            <div class="add-vehicle-icon">+</div>
+            <p>Add a New Vehicle</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sticker Status Section -->
+<div class="stickers-section">
+    <div class="title-center"><h3>Sticker Status</h3></div>
+    <div class="stickers-list">
+        {% for sticker in stickers %}
+        <div class="sticker-card" id="sticker-{{ sticker.id }}">
+            <div class="sticker-info">
+                <p><strong>Vehicle Model:</strong> {{ sticker.vehicle.vehicleManufacturer }} {{ sticker.vehicle.vehicleType }}</p>
+                <p><strong>Vehicle Color:</strong> {{ sticker.vehicle.vehicleColor }}</p>
+                <p><strong>Sticker Status:</strong> 
+                    <span class="sticker-status" data-expiry-date="{{ sticker.expiryDate }}"></span>
+                </p>
+            </div>
+            <div class="sticker-actions">
+                <button class="btn-status" id="btn-status-{{ sticker.id }}" data-expiry-date="{{ sticker.expiryDate }}">Status</button>
+                  <button class="btn-renew" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
+                  <form action="{% url 'delete_vehicle' sticker.vehicle.vehicleId %}" method="POST">
+                    {% csrf_token %}
+                    <button class="btn-remove">Remove</button>
+                </form>
             </div>
         </div>
         {% endfor %}
@@ -29,9 +74,9 @@
 <!-- Register New Vehicle Modal -->
 <div id="register-vehicle-modal" class="modal">
     <div class="modal-content">
-        <span class="close">&times;</span>
+        <span class="close" onclick="closeRegisterVehicleModal()">&times;</span>
         <h3>Register a New Vehicle</h3>
-        <form action="{% url 'register_vehicle' %}" method="POST" class="form-layout">
+        <form id="vehicle-registration-form" action="{% url 'register_vehicle' %}" method="POST" class="form-layout">
             {% csrf_token %}
             <div class="form-group">
                 <label for="manufacturer">Manufacturer:</label>
@@ -46,46 +91,30 @@
                 <input type="text" id="type" name="type" required>
             </div>
             <div class="form-group">
-                <label for="purchase_date">Purchase Date:</label>
-                <input type="date" id="purchase_date" name="purchase_date" required>
+                <label for="purchase-date">Purchase Date:</label>
+                <input type="date" id="purchase-date" name="purchase_date" required>
             </div>
             <div class="form-group">
-                <label for="expiry_date">Expiry Date:</label>
-                <input type="date" id="expiry_date" name="expiry_date" required>
+                <label for="expiry-date">Expiry Date:</label>
+                <input type="date" id="expiry-date" name="expiry_date" required>
             </div>
+
+            <div class="form-group">
+                <label for="vehicle-image">Upload Vehicle Image:</label>
+                <input type="file" id="vehicle-image" name="vehicleImage" accept="image/*">
+            </div>
+            <!-- Hidden input to include userId -->
+            <input type="hidden" id="userId" name="userId">
             <button type="submit" class="btn-primary">Register Vehicle</button>
         </form>
     </div>
 </div>
 
-<!-- Current Stickers Section -->
-<div class="stickers-section">
-    <h3>Current Stickers</h3>
-    <div class="stickers-grid">
-        {% for sticker in stickers %}
-        <div class="sticker-card" id="sticker-{{ sticker.id }}">
-            <div class="sticker-info">
-                <h4>{{ sticker.vehicle.vehicleManufacturer }}</h4>
-                <p>Expires on: <span class="expiry-date">{{ sticker.expiryDate }}</span></p>
-            </div>
-            <div class="sticker-actions">
-                <button class="btn-renew" data-expiry-date="{{ sticker.expiryDate }}" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
-                <button onclick="showEditForm('{{ sticker.vehicle.id }}')" class="btn-secondary">Edit</button>
-                <form action="{% url 'delete_vehicle' sticker.vehicle.id %}" method="POST" class="inline-form">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- Edit Vehicle Form Section -->
+<!-- Edit Vehicle Form Section (Modal) -->
 <div id="edit-form" class="modal" style="display:none;">
     <div class="modal-content">
         <h3>Edit Vehicle</h3>
-        <form id="vehicle-edit-form" action="" method="POST" class="form-layout">
+        <form id="vehicle-edit-form" method="POST" class="form-layout">
             {% csrf_token %}
             <input type="hidden" name="vehicle_id" id="vehicle-id">
             <div class="form-group">
@@ -106,284 +135,473 @@
     </div>
 </div>
 
-<!-- Renew Sticker Form Section -->
-<div id="renew-form" class="modal" style="display:none;">
-    <div class="modal-content">
-        <h3>Renew Sticker</h3>
-        <form id="sticker-renew-form" action="" method="POST" class="form-layout">
-            {% csrf_token %}
-            <input type="hidden" name="sticker_id" id="sticker-id">
-            <div class="form-group">
-                <label for="new-expiry-date">New Expiry Date:</label>
-                <input type="date" id="new-expiry-date" name="expiry_date" required>
-            </div>
-            <button type="submit" class="btn-primary">Renew</button>
-            <button type="button" onclick="cancelRenew()" class="btn-secondary">Cancel</button>
-        </form>
-    </div>
-</div>
+
+
+
+
 
 <!-- JavaScript Section -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const maxVehicles = 3;
-        const vehiclesGrid = document.getElementById('vehicles-grid');
-        const registerVehicleModal = document.getElementById('register-vehicle-modal');
-        const closeModal = document.querySelector('.close');
+    
+    // Get all sticker status elements
+    function getStatusColor(expiryDate) {
+    const currentDate = new Date();
+    const expiry = new Date(expiryDate);
+    const timeDiff = expiry - currentDate;
+    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-        function updateVehiclesDisplay() {
-            const vehicleCards = vehiclesGrid.querySelectorAll('.vehicle-card');
-            const currentVehicleCount = vehicleCards.length;
-            const emptySlots = maxVehicles - currentVehicleCount;
+    if (daysDiff > 14) {
+        return { color: 'green', text: 'Good' };
+    } else if (daysDiff > 0 && daysDiff <= 14) {
+        return { color: 'yellow', text: 'Near Expiry' };
+    } else {
+        return { color: 'red', text: 'Expired' };
+    }
+}
 
-            for (let i = 0; i < emptySlots; i++) {
-                const emptySlot = document.createElement('div');
-                emptySlot.classList.add('vehicle-card', 'empty-slot');
-                emptySlot.innerHTML = '<div class="add-vehicle">+</div>';
-                emptySlot.style.cursor = 'pointer';
-                emptySlot.addEventListener('click', function() {
-                    registerVehicleModal.style.display = 'block';
-                });
-                vehiclesGrid.appendChild(emptySlot);
-            }
+document.addEventListener('DOMContentLoaded', function () {
+    // Ensure the userId is included in the registration form before submission
+    const vehicleRegistrationForm = document.getElementById('vehicle-registration-form');
+    const userIdInput = document.getElementById('userId');
+
+    // Set the userId from localStorage
+    userIdInput.value = localStorage.getItem('userId');
+
+    // Optional: Add an event listener to validate userId presence
+    vehicleRegistrationForm.addEventListener('submit', async function (event) {
+        if (!userIdInput.value) {
+            event.preventDefault(); // Prevent form submission
+            alert('User ID is missing. Please log in again.');
+            return;
         }
 
-        closeModal.addEventListener('click', function() {
-            registerVehicleModal.style.display = 'none';
-        });
+        event.preventDefault(); // Prevent default submission for AJAX handling
 
-        window.addEventListener('click', function(event) {
-            if (event.target == registerVehicleModal) {
-                registerVehicleModal.style.display = 'none';
-            }
-        });
+        const formData = new FormData(vehicleRegistrationForm);
 
-        updateVehiclesDisplay();
+        try {
+            // Send the form data via an AJAX POST request
+            const response = await fetch(vehicleRegistrationForm.action, {
+                method: 'POST',
+                body: formData,
+            });
 
-        const renewButtons = document.querySelectorAll('.btn-renew');
-        const today = new Date();
-    
-        renewButtons.forEach(button => {
-            const expiryDate = new Date(button.getAttribute('data-expiry-date'));
-            const timeDiff = expiryDate - today;
-            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-    
-            if (daysDiff <= 7) {
-                button.style.backgroundColor = 'red';
-            } else if (daysDiff <= 30) {
-                button.style.backgroundColor = 'yellow';
+            if (response.ok) {
+                const result = await response.json();
+
+                // Add the new vehicle to the grid dynamically
+                const vehicleGrid = document.getElementById('vehicles-grid');
+                const newVehicleCard = document.createElement('div');
+                newVehicleCard.className = 'vehicle-card';
+                newVehicleCard.id = `vehicle-${result.id}`;
+                newVehicleCard.setAttribute('data-color', result.vehicleColor);
+                newVehicleCard.setAttribute('data-type', result.vehicleType);
+                newVehicleCard.setAttribute('data-manufacturer', result.vehicleManufacturer);
+                newVehicleCard.onclick = () => showEditForm(result.id);
+
+                // Add the image and info to the card
+                newVehicleCard.innerHTML = `
+                    <div class="car-image">
+                        <img src="${result.vehicleImageUrl || '/static/images/default-car.png'}" alt="Vehicle Image">
+                    </div>
+                    <div class="vehicle-info">
+                        <h4>${result.vehicleManufacturer} ${result.vehicleType}</h4>
+                    </div>
+                `;
+
+                vehicleGrid.appendChild(newVehicleCard);
+
+                // Close the modal
+                closeRegisterVehicleModal();
             } else {
-                button.style.backgroundColor = 'green';
+                const error = await response.json();
+                alert('Error: ' + (error.message || 'Failed to register vehicle.'));
             }
-        });
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An unexpected error occurred.');
+        }
     });
 
+    // Add preview functionality for the uploaded vehicle image
+    const vehicleImageInput = document.getElementById('vehicle-image');
+    vehicleImageInput.addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        const previewContainer = document.querySelector('.car-image-preview');
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                // Create or update the preview image
+                if (!previewContainer) {
+                    const newPreview = document.createElement('img');
+                    newPreview.src = e.target.result;
+                    newPreview.alt = 'Vehicle Image Preview';
+                    newPreview.classList.add('car-image-preview');
+                    vehicleRegistrationForm.appendChild(newPreview);
+                } else {
+                    previewContainer.src = e.target.result;
+                }
+            };
+
+            reader.readAsDataURL(file); // Convert the image to base64 format for preview
+        }
+    });
+});
+
+
+    function showRegisterVehicleModal() {
+        document.getElementById('register-vehicle-modal').style.display = 'block';
+    }
+
+    function closeRegisterVehicleModal() {
+        document.getElementById('register-vehicle-modal').style.display = 'none';
+    }
+
     function showEditForm(vehicleId) {
-        // Populate form fields based on vehicle information
-        const vehicleCard = document.querySelector(`#vehicle-${vehicleId} .vehicle-info`);
-        const manufacturer = vehicleCard.querySelector('h4').innerText;
-        const color = vehicleCard.querySelector('p:nth-child(2)').innerText.split(': ')[1];
-        const type = vehicleCard.querySelector('p:nth-child(3)').innerText.split(': ')[1];
+        const vehicleCard = document.querySelector(`#vehicle-${vehicleId}`);
+        if (vehicleCard) {
+            const manufacturer = vehicleCard.getAttribute('data-manufacturer');
+            const color = vehicleCard.getAttribute('data-color');
+            const type = vehicleCard.getAttribute('data-type');
 
-        document.getElementById('vehicle-id').value = vehicleId;
-        document.getElementById('edit-manufacturer').value = manufacturer;
-        document.getElementById('edit-color').value = color;
-        document.getElementById('edit-type').value = type;
-        document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
-        document.getElementById('edit-form').style.display = 'block';
+            document.getElementById('vehicle-id').value = vehicleId;
+            document.getElementById('edit-manufacturer').value = manufacturer;
+            document.getElementById('edit-color').value = color;
+            document.getElementById('edit-type').value = type;
+
+            document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
+            document.getElementById('edit-form').style.display = 'block';
+        } else {
+            console.error('Vehicle card not found');
+        }
     }
 
-    function cancelEdit() {
-        document.getElementById('edit-form').style.display = 'none';
-    }
+function cancelEdit() {
+    document.getElementById('edit-form').style.display = 'none';
+}
 
-    function showRenewForm(stickerId) {
-        document.getElementById('sticker-id').value = stickerId;
-        document.getElementById('sticker-renew-form').action = "{% url 'renew_sticker' '0' %}".replace('0', stickerId);
-        document.getElementById('renew-form').style.display = 'block';
-    }
 
-    function cancelRenew() {
-        document.getElementById('renew-form').style.display = 'none';
-    }
+
+
 </script>
 
-<!-- Styles -->
 <style>
-    /* Header Section */
-    .header-section {
-        position: fixed;
-        top: 80px;
-        left: 0;
-        height: 150px;
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 20px;
-        background-color: #600000;
-        color: white;
-        z-index: 1000;
-        padding: 0;
-    }
-    
-    .header-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-   /* Vehicles Section */
-   .vehicles-section {
-        margin-top: 200px; /* Adjusted to position below the header */
-        padding: 20px;
-        text-align: center;
-    }
-    
-    /* Updated .vehicles-grid for horizontal alignment */
-    .vehicles-grid {
-        display: flex; /* Use Flexbox for horizontal alignment */
-        justify-content: flex-start; /* Align cards to the left */
-        gap: 20px; /* Add spacing between cards */
-        flex-wrap: wrap; /* Allow wrapping to the next line if needed */
-        padding: 10px;
-    }
-    
-    /* Vehicle Card */
-    .vehicle-card {
-        background-color: white;
-        border: 2px solid #ddd;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        width: 250px; /* Fixed card width for consistent sizing */
-        text-align: left; /* Align card content to the left */
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-    
-    /* Additional Styling */
-    .form-layout {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    
-    .form-group {
-        flex: 1;
-        min-width: 200px;
-    }
-    
-    .btn-primary {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        cursor: pointer;
-    }
-    
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        cursor: pointer;
-    }
-    
-    .btn-danger {
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        cursor: pointer;
-    }
-    
-    /* Grid Layout for Stickers */
-    .stickers-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-    }
-    
-    .vehicle-info, .sticker-info {
-        margin-bottom: 10px;
-    }
-    
-    .vehicle-actions, .sticker-actions {
-        display: flex;
-        gap: 10px;
-    }
+    /* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9fafb;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
 
-    .vehicle-card, .sticker-card {
-        padding: 15px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background-color: rgb(226, 211, 226);
-    }
-    
-    /* Modal Styles */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4);
-    }
-    
-    .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 500px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-    
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-    
-    /* Empty Slot Styles */
-    .empty-slot {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border: 2px dashed #ccc;
-        cursor: pointer;
-        height: 100px;
-        width: 200px;
-        margin: 10px;
-    }
-    
-    .add-vehicle {
-        font-size: 2em;
-        color: #007bff;
-    }
-    
-    /* Lowered Opacity Section */
-    .lowered-opacity {
-        opacity: 0.5;
-    }
-    
-    .lowered-opacity h5 {
-        margin-top: 100px;
-    }
-    </style>
-    
+.title-center {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.header-section {
+
+
+
+position: fixed;
+
+
+
+top: 80px;
+
+
+
+left: 0;
+
+
+
+height: 150px;
+
+
+
+width: 100%;
+
+
+
+display: flex;
+
+
+
+justify-content: space-between;
+
+
+
+align-items: center;
+
+
+
+padding: 10px 20px;
+
+
+
+background-color: #600000;
+
+
+
+color: white;
+
+
+
+z-index: 1000;
+
+
+
+padding: 0;
+
+
+
+}
+
+
+
+
+
+
+
+.header-image {
+
+
+
+width: 100%;
+
+
+
+height: 100%;
+
+
+
+object-fit: cover;
+
+
+
+}
+.header-section h2 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.header-section p {
+    font-size: 1rem;
+    margin-top: 10px;
+    color: #e0eafc;
+}
+
+/* Sticker Section */
+.stickers-list {
+    display: flex; /* Use flexbox for alignment */
+    flex-direction: column; /* Stack the cards vertically */
+    align-items: center; /* Center the cards horizontally */
+    gap: 15px; /* Add consistent spacing between the cards */
+    width: 100%; /* Optional: Ensures full-width for the container */
+    margin: 0 auto; /* Center the container itself */
+}
+
+.sticker-card {
+    padding: 10px;
+    border: 1px solid #300000;
+    background-color: #f5f5f5;
+    text-align: left;
+    display: flex;
+    flex-direction: column; /* Keep the content stacked vertically */
+    width: 900px; /* Set consistent width */
+    transition: transform 0.3s, box-shadow 0.3s; /* Smoother hover animation */
+}
+
+.sticker-info {
+    margin-bottom: 10px; /* Space between the sticker info and buttons */
+}
+
+.sticker-actions {
+    display: flex; /* Align buttons horizontally */
+    justify-content: flex-start; /* Align buttons to the left */
+    gap: 10px; /* Space between buttons */
+}
+
+/* Vehicles Section */
+.vehicles-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+}
+
+.vehicle-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    background-color: white;
+    width: 260px; /* Set consistent width */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s; /* Smoother hover animation */
+}
+
+.vehicle-image {
+    width: 70%; /* Adjust this to control the image width (e.g., 70% of the card's width) */
+    height: auto; /* Maintain aspect ratio */
+    max-height: 100px; /* Limit the image height (optional) */
+    object-fit: contain; /* Ensure the image fits without distortion */
+    margin-bottom: 10px; /* Optional: Add space between the image and the vehicle info */
+}
+
+.vehicle-card:hover, .sticker-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 1);
+}
+
+.add-vehicle-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #0073e6;
+    color: #0073e6;
+    cursor: pointer;
+}
+
+.add-vehicle-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+/* .vehicle-info h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+} */
+
+/* .vehicle-info p {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0;
+} */
+
+/* Buttons */
+.btn-status, .btn-renew, .btn-remove, .btn-primary, .btn-secondary {
+    border: none;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.btn-status {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-renew {
+    background-color: #ffc107;
+    color: white;
+}
+
+.btn-remove {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-primary {
+    background-color: #0073e6;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-status:hover, .btn-renew:hover, .btn-remove:hover, .btn-primary:hover, .btn-secondary:hover {
+    opacity: 0.9;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Sticker Status */
+.sticker-status {
+    font-weight: bold;
+    font-size: 1rem;
+    margin-right: 10px; /* Add space between the status text and buttons */
+}
+
+.sticker-status[data-expiry-date] {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.car-image {
+    width: 100px; /* Set the desired width */
+    height: 100px; /* Set the desired height */
+    overflow: hidden; /* Ensure the image doesn't overflow */
+    border-radius: 8px; /* Optional: Add rounded corners */
+    margin: auto; /* Center the image horizontally */
+    display: flex; /* Enable centering of the image content */
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+}
+
+.car-image img {
+    max-width: 100%; /* Ensure the image fits within the container */
+    max-height: 100%; /* Maintain aspect ratio */
+    object-fit: cover; /* Ensure the image fills the container without stretching */
+}
+
+
+</style>
+
+
 {% endblock %}

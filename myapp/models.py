@@ -13,6 +13,14 @@ class User(AbstractUser):
     contactNo = models.CharField(max_length=15)
     accountType = models.CharField(choices=[('staff', 'Staff'), ('user', 'User')], max_length=10)
 
+    vehicle = models.ForeignKey(
+        'myapp.Vehicle',  # Replace 'myapp' with your app name
+        on_delete=models.SET_NULL,  # Set to NULL if the vehicle is deleted
+        null=True,  # Allows the field to be optional
+        blank=True,  # Allows the field to be left blank in forms
+        related_name='users'
+    )
+
     class Meta:
         db_table = 'myapp_user'  # Replace 'myapp' with your actual app name
         verbose_name = 'user'
@@ -26,9 +34,11 @@ class User(AbstractUser):
     ### ARTEUELA
 
 class Vehicle(models.Model):
+    vehicleId = models.AutoField(primary_key=True)
     vehicleManufacturer = models.CharField(max_length=100)
     vehicleColor = models.CharField(max_length=50)
     vehicleType = models.CharField(max_length=50)
+    vehicleImage = models.ImageField(upload_to='vehicle_images/', null=True, blank=True)  # New field
 
     def __str__(self):
         return f"{self.vehicleManufacturer} - {self.vehicleColor} - {self.vehicleType}"

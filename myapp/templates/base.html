@@ -136,9 +136,9 @@
             <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image">
         </div>
         <div class="vehicle-details">
-            <h4 id="vehicle-name">Vehicle Name: Toyota Corolla</h4>
-            <p id="vehicle-model">Model: 2020</p>
-            <p id="vehicle-plate">Plate Number: ABC-1234</p>
+            <h4 id="vehicle-name">Vehicle Name: {{ vehicle_info.manufacturer }}</h4>
+             <p id="vehicle-model">Model: {{ vehicle_info.type }}</p>
+            <p id="vehicle-plate">Plate Number: </p>
         </div>
     </div>
 </div>
@@ -153,9 +153,9 @@
         <ul>
             <a href="http://127.0.0.1:8000/api/parkingMap/">Update Parking Status</a>
             <a href="http://127.0.0.1:8000/api/sticker_management/">Sticker Management</a>
-            <a>Parking Reservation</a>
-            <a>Account Settings</a>
-            <a>About us</a>
+            <a href="http://127.0.0.1:8000/api/parkReserve/">Parking Reservation</a>
+            <a href="http://127.0.0.1:8000/api/accountSettings/">Account Settings</a>
+            <a href="http://127.0.0.1:8000/api/aboutUs/">About us</a>
         </ul>
     </div>
 </div>
@@ -206,20 +206,33 @@
                 }
             })
                 .catch(error => console.error('Error fetching user details:', error));
-        } else {
+        } else {    
             console.error('No userId found in localStorage');
         }
     });
 
-    document.querySelector('.iconOut').addEventListener('click', function (event) {
-                event.preventDefault(); // Prevent default anchor action
-                // Clear user session or local storage
-                localStorage.removeItem('userId'); // Remove the userId or other session data
-                console.log('User logged out successfully.');
+        document.querySelector('.iconOut').addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default anchor action
+            // Clear user session or local storage
+            localStorage.removeItem('userId'); // Remove the userId or other session data
+            console.log('User logged out successfully.');
+ 
+            // Redirect to the login page
+            window.location.href = 'http://127.0.0.1:8000/api/login/';
+        });
 
-                // Redirect to the login page
-                window.location.href = 'http://127.0.0.1:8000/api/login/';
-            });
+
+                    // Fetch vehicle details on page load
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('/api/vehicle-info/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('vehicle-name').textContent = "Vehicle Name: " + data.manufacturer;
+                    document.getElementById('vehicle-model').textContent = "Model: " + data.type;
+                    document.getElementById('vehicle-plate').textContent = "Plate Number: " + data.plate_number;
+                })
+                .catch(error => console.error('Error fetching vehicle info:', error));
+        });
 
 </script>
 
