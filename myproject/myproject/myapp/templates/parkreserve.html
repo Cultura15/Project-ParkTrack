@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Park Reservation Page{% endblock %}
+
+{% block content %}
+
+  <div class="banner">
+  <h2>Parking <span>Reservation</span></h2>
+  <p>Welcome! Reserve your parking spot in just a few easy steps. Select your preferred spot, choose a date and time, and confirm your reservation below.</p>
+  </div>
+   
+      <div class="reservation">
+  <div class="form">
+  <label for="location">
+  <span class="icon">📍</span>
+            Location
+  <select id="location">
+  <option value="">Select Location</option>
+  <option value="allied">Allied Building</option>
+  <option value="pe_area">PE Area</option>
+  </select>
+  </label>
+   
+          <div class="date-time">
+  <label for="entry-date">Entry Date</label>
+  <input type="date" id="entry-date" />
+  <label for="entry-time">Entry Time</label>
+  <input type="time" id="entry-time" />
+  </div>
+  <div class="date-time">
+  <label for="exit-date">Exit Date</label>
+  <input type="date" id="exit-date" />
+  <label for="exit-time">Exit Time</label>
+  <input type="time" id="exit-time" />
+  </div>
+   
+          <button class="confirm-btn">Confirm</button>
+  </div>
+   
+        <div class="map">
+  <h3>Mini Map</h3>
+  <img src="{% static 'parkingMap.png' %}" alt="Parking Map"/>
+
+  </div>
+  </div>
+
+
+<style>
+
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #800000;
+    color: #fff;
+    padding: 1rem 2rem;
+  }
+
+  .header .logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .header .logo img {
+    width: 50px;
+    height: 50px;
+    margin-right: 0.5rem;
+  }
+
+  .header .logo h1 {
+    font-size: 1.5rem;
+  }
+
+  .header .logo span {
+    font-weight: bold;
+  }
+
+  .search-bar input {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    width: 200px;
+  }
+
+  .banner {
+    background-color: #fdfdfd;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .banner h2 {
+    font-size: 2rem;
+    color: #800000;
+  }
+
+  .banner h2 span {
+    color: #ffc107;
+  }
+
+  .banner p {
+    margin: 1rem 0;
+    font-size: 1rem;
+    color: #666;
+  }
+
+  .banner img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 1rem;
+  }
+
+  .reservation {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  .form {
+    flex: 1;
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .form label {
+    display: block;
+    margin-bottom: 1rem;
+    font-weight: bold;
+  }
+
+  .form input, .form select {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .date-time {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .confirm-btn {
+    background-color: #F0574D;
+    color: #fff;
+    border: none;
+    padding: 0.75rem;
+    width: 40%;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+
+  .map {
+  flex: 1;
+  text-align: center;
+  display: block; /* Ensures the image is properly rendered */
+}
+
+  .map img {
+    max-width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 1rem;
+  }
+
+  .form input, .form select {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #d3d3d3; /* Light gray background */
+  }
+</style>
+
+{% endblock %}

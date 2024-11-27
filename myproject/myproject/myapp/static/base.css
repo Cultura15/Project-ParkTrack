@@ -1,0 +1,263 @@
+/* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Apply the font globally */
+/* body {
+    font-family: 'Poppins', sans-serif;
+} */
+
+ 
+
+.container {
+    height: 100vh;
+}
+
+
+
+/* Sidebar */
+.sidebar {
+    position: fixed; /* Fixes the sidebar to the viewport */
+    left: 0; /* Aligns it to the very left */
+    top: 0; /* Aligns it to the top */
+    width: 100px; /* Fixed width */
+    height: 100vh; /* Makes it full height of the viewport */
+    background-color: #dfb666;
+    color: #2c2c2c;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 1000; /* Ensures it stays above other content */
+}
+.user-info {
+    font-weight: bold;
+}
+
+.small-container {
+    position: relative; /* Position relative to the nav-menu */
+    background-color: rgba(255, 255, 0, 0.2); /* Yellow with transparency */
+    padding: 10px; /* Padding around the nav-menu to give space */
+    border-top-left-radius: 200px; /* Slightly curve the top-left corner */
+    border-bottom-left-radius: 200px; /* Slightly curve the bottom-left corner */
+    display: inline-block; /* Makes the container fit around the nav items */
+    width: max-content; /* Ensures it grows to fit the content inside */
+    height: 500px; /* Adjust the height to fit the nav items */
+    margin-left: 50px;
+
+ 
+}
+
+
+.nav-menu {
+    position: fixed;
+    top: 10%;
+    display: flex;
+    flex-direction: column; 
+
+}
+
+.nav-item {
+    color: black;
+    text-decoration: none;
+    width: 50px; /* Set the width of the circle */
+    height: 50px; /* Set the height of the circle */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e6e6e6;
+    border-radius: 50%; /* Makes the item circular */
+    text-align: center;
+    overflow: hidden; /* Ensures the image is clipped if it exceeds the circle */
+    transition: background-color 0.3s ease; /* Smooth transition for background color */
+    
+}
+
+.nav-item img {
+    width: 100%; /* Makes the image take up the full width of the circle */
+    height: 100%; /* Makes the image take up the full height of the circle */
+    object-fit: cover; /* Ensures the image covers the area of the circle without distortion */
+    transition: transform 0.3s ease; /* Smooth zoom effect */
+}
+.nav-item:hover {
+    background-color: #d3a43d; /* Change background color on hover */
+}
+.nav-item:hover img {
+    transform: scale(1.2); /* Zoom in the image */
+}
+.nav-item:hover {
+    color: white;
+}
+
+
+/* Main Content */
+.main-content {
+    margin-top: 60px; /* Adds space for the fixed header */
+    margin-left: 120px; /* Keeps space for the fixed sidebar */
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Header */
+.header {
+    position: fixed; /* Keeps the header fixed at the top */
+    top: 0; /* Aligns it to the top edge */
+    left: 0; /* Aligns it to the left edge */
+    width: 100%; /* Spans the full width of the viewport */
+    display: flex; /* Enables horizontal alignment of children */
+    justify-content: space-between; /* Distributes space evenly between the elements */
+    align-items: center; /* Vertically centers the items */
+    padding: 10px 20px; /* Adds padding for spacing */
+    background-color: #600000; /* Header background color */
+    color: white; /* Text color */
+    z-index: 1000; /* Ensures the header stays above other elements */
+}
+
+.header h1 {
+    font-size: 24px;
+    margin-left: 20px
+}
+
+.header span {
+    font-style: italic;
+}
+
+.logo {
+    margin-left: 150px; /* Adjust as necessary */
+    font-size: 0; /* Remove any extra text size */
+}
+
+.logo img {
+    width: 30px; /* Adjust size of the logo image */
+    height: 30px; /* Ensure the height is equal to the width for a circular logo */
+    border-radius: 50%; /* Makes the image round */
+    object-fit: cover; /* Ensures the image fits within the circle */
+    object-position: center; /* Centers the image */
+    transform: scale(1.5); /* Scales up the image further */
+}
+
+.search-bar {
+    flex-grow: 1; /* Takes up the remaining space */
+    display: flex;
+    justify-content: center; /* Centers the search bar horizontally */
+}
+
+.search-bar input {
+    padding: 5px; /* Adds padding inside the input box */
+    border-radius: 5px; /* Rounds the corners */
+    border: none; /* Removes border for a cleaner look */
+    font-size: 16px; /* Sets font size */
+    width: 200px; /* Adjusts the input box width */
+}
+
+.acc-icon {
+    display: flex; /* Ensures the icon is treated as a flex item */
+    align-items: center; /* Vertically aligns the icon (if it's an image) */
+    justify-content: center; /* Centers the icon horizontally */
+    color: white; /* Ensures the text color is white */
+    font-size: 18px; /* Adjusts font size for text (optional if you want to keep it) */
+    margin-left: 0; /* Aligns the icon to the very left */
+    margin-right: 50px; /* Adjusts the right margin to ensure there's space if needed */
+}
+
+.acc-icon img {
+    width: 30px; /* Makes the image smaller */
+    height: auto; /* Keeps the aspect ratio intact */
+}
+
+
+
+/* Hero Section */
+.hero-section {
+    background-image: url('/static/home.png'); /* Path to the image */
+    background-size: cover; /* Makes sure the image covers the entire section */
+    background-position: center center; /* Centers the image within the section */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
+    height: calc(100vh - 60px); /* Ensures the hero section takes up the full viewport height minus the height of the header */
+    margin-left: 5px; /* Ensures the hero section doesn't overlap the sidebar */
+    padding: 10px; /* Adds some padding inside the hero section */
+    display: flex; /* Allows for flexible layout */
+    justify-content: center; /* Centers content horizontally */
+    align-items: center; /* Centers content vertically */
+    color: white; /* Text color for visibility */
+    width: 100%;
+}
+.title {
+    font-size: 48px;
+    color: #FFD700; /* Gold color */
+    text-shadow: 2px 2px 4px #333;
+}
+
+.description {
+    font-size: 18px;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+
+
+
+/* USER PROFILE */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.profile-picture img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.profile-info h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.profile-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #fafafa;
+}
+
+/* Divider */
+hr {
+    border: 1px solid #444;
+    margin: 20px 0;
+}
+
+/* VEHICLE INFO SECTION */
+.vehicle-info {
+    margin-top: auto; /* Pushes this section to the bottom */
+    text-align: center;
+}
+
+.vehicle-image img {
+    border: 1px solid #ddd;
+    padding: 5px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    max-width: 100%;
+    height: auto;
+}
+
+.vehicle-details h4, 
+.vehicle-details p {
+    margin: 10px 0;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+
+
