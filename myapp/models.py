@@ -1,8 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import date
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.conf import settings
 
-# Custom User model
+
+    ### USER ###
+
 class User(AbstractUser):
     userId = models.AutoField(primary_key=True)
     fname = models.CharField(max_length=100)
@@ -31,7 +36,7 @@ class User(AbstractUser):
     
     
     
-    ### ARTEUELA
+    ### VEHICLE ###
 
 class Vehicle(models.Model):
     vehicleId = models.AutoField(primary_key=True)
@@ -65,3 +70,47 @@ class Sticker(models.Model):
         db_table = 'myapp_sticker'  # Custom table name, optional
         verbose_name = 'sticker'
         verbose_name_plural = 'stickers'
+
+
+    ### PARKING AREA ###
+
+class ParkingArea(models.Model):
+    parking_area_id = models.AutoField(primary_key=True)
+    parking_location = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.parking_location
+
+class ParkingLot(models.Model):
+    STATUS_CHOICES = [
+        ('Available', 'Available'),
+        ('Occupied', 'Occupied')
+    ]
+
+    parking_lot_id = models.AutoField(primary_key=True)
+    parking_area = models.ForeignKey(ParkingArea, related_name='parking_lots', on_delete=models.CASCADE)
+    parking_lot_number = models.CharField(max_length=10)
+    parking_lot_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Available')
+
+    def save(self, *args, **kwargs):
+        # Check if this is a new parking lot and if the parking area already has 10 lots
+        if not self.pk and self.parking_area.parking_lots.count() >= 10:
+            raise ValidationError("Each parking area can only have 10 parking lots.")
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Lot {self.parking_lot_number} - {self.parking_lot_status} (Area: {self.parking_area})"
+    
+
+class Reservation(models.Model):
+    parking_area = models.ForeignKey(ParkingArea, on_delete=models.CASCADE)
+    parking_lot = models.ForeignKey(ParkingLot, on_delete=models.CASCADE)
+    entry_date = models.DateField()
+    entry_time = models.TimeField()
+    exit_date = models.DateField()
+    exit_time = models.TimeField()
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Reservation for Lot {self.parking_lot.parking_lot_number} in {self.parking_area.name}"    

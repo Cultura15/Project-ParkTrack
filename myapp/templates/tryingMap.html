@@ -1,0 +1,406 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restricted Map View</title>
+    <link rel="stylesheet" href="{% static 'menu.css' %}">
+
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="header-section">
+            <img src="{% static 'parkStatus.png' %}" alt="sm" class="header-image">
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header Section -->
+            <header class="header">
+                <div class="logo">
+                    <img src="{% static 'logo1.png' %}" alt="Logo">
+                </div>
+                <h1>ParkTrack -CIT-</h1>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search">
+                </div>
+                <!-- Dropdown Icon that triggers the right sidebar -->
+                <div class="acc-icon" onclick="toggleRightSidebar()">
+                    <img src="{% static 'dropdown.png' %}" alt="drop">
+                </div>
+            </header>
+
+    <!-- Main Content Wrapper for pages extending base.html -->
+      <!-- Map container with rounded corners -->
+      <div class="map-container">
+        <div id="map"></div>
+    </div>
+
+      <!-- Sidebar Menu Section -->
+      <aside class="sidebar">
+        <div class="user-info">
+            <span id="user-fname">{{ user_fname }}</span>
+        </div>
+        <nav class="nav-menu">
+            <div class="small-container">
+                <a href="http://127.0.0.1:8000/menu/" class="nav-item" style="margin-top: 30px;">
+                    <img src="{% static 'iconHome.png' %}" alt="icon1">
+                </a>
+                <!-- Menu Icon that triggers the left sidebar -->
+                <div class="nav-item" style="margin-top: 30px;" onclick="toggleLeftSidebar()">
+                    <img src="{% static 'iconMenu.png' %}" alt="icon2" class="icon-menu">
+                </div>
+                <a href="http://127.0.0.1:8000/api/news/" class="nav-item" style="margin-top: 30px;">
+                    <img src="{% static 'iconNews.png' %}" alt="icon3">
+                </a>
+                <div class="nav-item iconOut" style="margin-top: 30px;">
+                    <img src="{% static 'iconOut.png' %}" alt="icon4">
+                </div>
+            </div>
+        </nav>
+    </aside>
+</main>
+
+<!-- Right Sidebar (Dropdown Sidebar) -->
+<div class="new-sidebar">
+    <div class="user-profile">
+        <div class="profile-picture">
+            <img src="{% static 'profile.png' %}" alt="User Profile Picture">
+        </div>
+        <div class="profile-info">
+            <h3 id="user-name">{{ user_name }}</h3>
+            <p id="user-role">{{ user_role }}</p>
+        </div>
+    </div>
+    <hr>
+    <div class="vehicle-info">
+        <div class="vehicle-image">
+            <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image" id="vehicle-image">
+        </div>
+        <div class="vehicle-details">
+            <h4 id="vehicle-name">Vehicle Name: {{ vehicle_info.manufacturer }}</h4>
+            <p id="vehicle-model">Model: {{ vehicle_info.type }}</p>
+            <p id="vehicle-plate">Plate Number: {{ vehicle_info.plate_number}} </p>
+        </div>
+    </div>
+</div>
+
+<!-- Left Sidebar (Menu Sidebar) -->
+<div class="new-sidebar-left">
+    <div class="menu">
+        <h1>Menu</h1>
+    </div>
+    <hr>
+    <div class="list">
+        <ul>
+            <a href="http://127.0.0.1:8000/api/parkingMap/">Update Parking Status</a>
+            <a href="http://127.0.0.1:8000/api/sticker_management/">Sticker Management</a>
+            <a href="http://127.0.0.1:8000/api/reservation/">Parking Reservation</a>
+            <a href="http://127.0.0.1:8000/api/accountSettings/">Account Settings</a>
+            <a href="http://127.0.0.1:8000/api/aboutUs/">About us</a>
+        </ul>
+    </div>
+</div>
+
+</div>
+            
+  
+    <!-- Leaflet.js JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Coordinates and bounds from Django context
+        const mapLatitude = 10.295559;
+        const mapLongitude = 123.880658;
+        const mapBounds = {
+            north: 10.296728255380573,
+            south: 10.293841944776801,
+            west: 123.87978786269375,
+            east: 123.8817703943783,
+        };
+
+        // Initialize the map with restricted zoom
+        const map = L.map('map', {
+            center: [mapLatitude, mapLongitude],
+            zoom: 19, // Fixed zoom level
+            minZoom: 19, // Minimum zoom level
+            maxZoom: 19, // Maximum zoom level
+            maxBounds: [
+                [mapBounds.south, mapBounds.west], // Southwest corner
+                [mapBounds.north, mapBounds.east]  // Northeast corner
+            ],
+            maxBoundsViscosity: 1.0, // Prevent panning beyond bounds
+            zoomControl: false, // Disable zoom controls
+            scrollWheelZoom: false, // Disable scroll zoom
+            doubleClickZoom: false, // Disable double-click zoom
+            boxZoom: false, // Disable drag box zoom
+            keyboard: false, // Disable keyboard zoom
+            touchZoom: false // Disable touch gestures
+        });
+
+        // Add a tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20, // Max supported zoom for OpenStreetMap tiles
+            attribution: '© OpenStreetMap contributors',
+        }).addTo(map);
+
+        // Add a marker at the center
+        L.marker([mapLatitude, mapLongitude]).addTo(map)
+            .bindPopup('<b>Marker Location</b><br>This is the center of your restricted area!')
+            .openPopup();
+
+        // Define the center area as a small rectangle (color: red)
+        const centerLat = 10.2943840791692;
+        const centerLng = 123.8806402822554;
+
+        // Adjust the bounds around the specific center point
+        const centerRectangleBounds = [
+            [centerLat - 0.0001, centerLng - 0.0002], // Southwest corner (slightly lower and left)
+            [centerLat + 0.0001, centerLng + 0.00001]  // Northeast corner (slightly upper and right)
+        ];
+
+        const centerRectangle = L.rectangle(centerRectangleBounds, {
+            color: 'red',
+            weight: 2,
+            fillOpacity: 0.3
+        }).addTo(map);
+
+        // Add a tooltip inside the rectangle with the text "NGE Area"
+        centerRectangle.bindTooltip("NGE Area", {
+            permanent: true, // Make the tooltip always visible
+            direction: "top", // Position the text in the center of the rectangle
+            className: "rectangle-tooltip" // Optional: Add a custom class for styling
+        }).openTooltip();
+
+        // Add a click event listener to the rectangle
+        centerRectangle.on('click', function () {
+            window.location.href = 'http://127.0.0.1:8000/api/area1/';
+        });
+
+        /////////////////PE AREA/////////////////
+
+        const centerLat2 = 10.295680463953428;
+        const centerLng2 = 123.88043821378228;
+
+        const centerRectangleBounds2 = [
+            [centerLat2 - 0.000200, centerLng2 - 0.0001], // Southwest corner (slightly lower and left)
+            [centerLat2 + 0.000009, centerLng2 + 0.0002]  // Northeast corner (slightly upper and right)
+        ];
+
+        const centerRectangle2 = L.rectangle(centerRectangleBounds2, {
+            color: 'red',
+            weight: 2,
+            fillOpacity: 0.3
+        }).addTo(map);
+
+        centerRectangle2.bindTooltip("PE Area", {
+            permanent: true, // Make the tooltip always visible
+            direction: "top", // Position the text in the center of the rectangle
+            className: "rectangle-tooltip" // Optional: Add a custom class for styling
+        }).openTooltip();
+
+        centerRectangle2.on('click', function () {
+            window.location.href = 'http://127.0.0.1:8000/api/area2/';
+        });
+
+        /////////////ALLIED BLDG. ///////////
+
+        const centerLat3 = 10.29526024820216;
+        const centerLng3 = 123.87977345096147;
+
+        const centerRectangleBounds3 = [
+            [centerLat3 - 0.0001, centerLng3 - 0.0001], // Southwest corner (slightly lower and left)
+            [centerLat3 + 0.0001, centerLng3 + 0.0002]  // Northeast corner (slightly upper and right)
+        ];
+
+        const centerRectangle3 = L.rectangle(centerRectangleBounds3, {
+            color: 'red',
+            weight: 2,
+            fillOpacity: 0.3
+        }).addTo(map);
+
+        centerRectangle3.bindTooltip("ALLIED BLDG.", {
+            permanent: true, // Make the tooltip always visible
+            direction: "top", // Position the text in the center of the rectangle
+            className: "rectangle-tooltip" // Optional: Add a custom class for styling
+        }).openTooltip();
+
+        centerRectangle3.on('click', function () {
+            window.location.href = 'http://127.0.0.1:8000/api/area3/';
+        });
+
+
+        // parent layout
+
+
+        function toggleRightSidebar() {
+        const sidebarRight = document.querySelector('.new-sidebar');
+        sidebarRight.style.display = (sidebarRight.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function toggleLeftSidebar() {
+        const sidebarLeft = document.querySelector('.new-sidebar-left');
+        sidebarLeft.style.display = (sidebarLeft.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // Close the sidebars if clicked outside
+    document.addEventListener('click', function(event) {
+        const newSidebarRight = document.querySelector('.new-sidebar');
+        const newSidebarLeft = document.querySelector('.new-sidebar-left');
+        const accIcon = document.querySelector('.acc-icon');
+        const iconMenu = document.querySelector('.icon-menu');
+
+        if (!accIcon.contains(event.target) && !newSidebarRight.contains(event.target) &&
+            !iconMenu.contains(event.target) && !newSidebarLeft.contains(event.target)) {
+            newSidebarRight.style.display = 'none';
+            newSidebarLeft.style.display = 'none';
+        }
+    });
+
+    // Fetch user details on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const userId = localStorage.getItem('userId'); // Get userId from localStorage
+
+        if (userId) {
+            fetch(`http://127.0.0.1:8000/api/get_user_details/?userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                console.log('User data:', data);  // Log data to see if it's coming through
+                if (data.user) {
+                    document.getElementById('user-name').textContent = `${data.user.fname} ${data.user.lname}`;
+                    document.getElementById('user-fname').textContent = `Hi, ${data.user.fname}`;
+                    document.getElementById('user-role').textContent = `Role: ${data.user.accountType}`;
+                } else {
+                    console.error('User not found');
+                }
+            })
+                .catch(error => console.error('Error fetching user details:', error));
+        } else {    
+            console.error('No userId found in localStorage');
+        }
+    });
+
+        document.querySelector('.iconOut').addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default anchor action
+            // Clear user session or local storage
+            localStorage.removeItem('userId'); // Remove the userId or other session data
+            console.log('User logged out successfully.');
+
+            // Redirect to the login page
+            window.location.href = 'http://127.0.0.1:8000/api/login/';
+        });
+
+
+    </script>
+
+
+  <!-- Custom CSS for styling the map container -->
+  <style>
+    .map-container {
+        width: 80%; /* Set the desired width */
+        height: 700px; /* Set the desired height */
+        margin: 20px auto; /* Center the container */
+        border-radius: 20px; /* Rounded corners */
+        overflow: hidden; /* Hide any overflow */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Optional: Add a shadow */
+        margin-top: 250px;
+        margin-right: 10px;
+    }
+
+    #map {
+        height: 100%; /* Full height of the container */
+        width: 100%; /* Full width of the container */
+    }
+
+    
+    body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        h1, h2, h3, p, span {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Style for the new sidebar */
+        .new-sidebar {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #4D0303;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 5px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        /* Style for the list inside the new sidebar */
+        .new-sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .new-sidebar ul li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .new-sidebar ul li a {
+            text-decoration: none;
+            color: black;
+        }
+
+        .new-sidebar ul li:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Style for the new sidebar on the left (for iconMenu) */
+        .new-sidebar-left {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 140px;
+            width: 250px;
+            height: 100%;
+            background: linear-gradient(to bottom, #E29E19 0%, #700D0D 60%, #FFFFFF 100%);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .header-section {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        height: 150px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #600000;
+        color: white;
+        z-index: 1000;
+        padding: 0;
+    }
+    
+    .header-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style>
+
+</body>
+</html>

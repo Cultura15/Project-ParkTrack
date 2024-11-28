@@ -40,10 +40,22 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'myapp',
+    'channels',
     'django.contrib.sites',
 ]
 
 AUTH_USER_MODEL = 'myapp.User'
+
+# Channels settings
+ASGI_APPLICATION = 'myproject.asgi.application'
+
+# Use the in-memory channel layer (suitable for development)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

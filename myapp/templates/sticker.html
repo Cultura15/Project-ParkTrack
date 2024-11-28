@@ -13,7 +13,7 @@
 <!-- Vehicles Section -->
 <div class="vehicles-section">
     <div class="title-center"><h3>Your Vehicles</h3><br><br>
-    <h2>Your Vehicles:</h1>
+    <h2>Your Vehicles:</h2>
     <p>Max Capacity: 3</p></div>
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
@@ -55,28 +55,39 @@
     <div class="stickers-list">
         {% for sticker in stickers %}
         <div class="sticker-card" id="sticker-{{ sticker.id }}">
-          <div class="sticker-info">
-    <p><strong>Vehicle Model:</strong> {{ sticker.vehicle.vehicleManufacturer }} {{ sticker.vehicle.vehicleType }}</p>
-    <p><strong>Vehicle Color:</strong> {{ sticker.vehicle.vehicleColor }}</p>
-    <p><strong>Sticker Status:</strong> 
-        {% if sticker.vehicle.isEquipped %}
-            <span class="sticker-status equipped">Equipped</span>
-        {% else %}
-            <span class="sticker-status unequipped">Not Equipped</span>
-        {% endif %}
-    </p>
-</div>
-
+            <div class="sticker-info">
+                <p><strong>Vehicle Model:</strong> {{ sticker.vehicle.vehicleManufacturer }} {{ sticker.vehicle.vehicleType }}</p>
+                <p><strong>Vehicle Color:</strong> {{ sticker.vehicle.vehicleColor }}</p>
+                <p><strong>Sticker Status:</strong> 
+                    <span class="sticker-status" data-expiry-date="{{ sticker.expiryDate }}"></span>
+                </p>
+            </div>
             <div class="sticker-actions">
                 <button class="btn-status" id="btn-status-{{ sticker.id }}" data-expiry-date="{{ sticker.expiryDate }}">Status</button>
-                  <button class="btn-renew" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
-                  <form action="{% url 'delete_vehicle' sticker.vehicle.vehicleId %}" method="POST">
+                <button class="btn-renew" onclick="showRenewStickerModal('{{ sticker.id }}')">Renew</button>
+                <form action="{% url 'delete_vehicle' sticker.vehicle.vehicleId %}" method="POST">
                     {% csrf_token %}
                     <button class="btn-remove">Remove</button>
                 </form>
             </div>
         </div>
         {% endfor %}
+    </div>
+</div>
+
+<!-- Renew Sticker Modal -->
+<div id="renew-sticker-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeRenewStickerModal()">&times;</span>
+        <h3>Renew Sticker</h3>
+        <form id="renew-sticker-form" onsubmit="submitRenewStickerForm(event)">
+            <input type="hidden" id="renew-sticker-id" name="sticker_id">
+            <div class="form-group">
+                <label for="new-expiry-date">New Expiry Date:</label>
+                <input type="date" id="new-expiry-date" name="new_expiry_date" required>
+            </div>
+            <button type="submit" class="btn-primary">Renew</button>
+        </form>
     </div>
 </div>
 
@@ -145,7 +156,7 @@
             </div>
 
             <!-- Equip Button (moved here) -->
-            <button type="button" id="equip-button" class="equip-button" onclick="toggleEquipStatusInModal()">
+            <button type="button" id="equip-button" class="btn-primary" onclick="toggleEquipStatusInModal()">
                 Equip
             </button>
 
@@ -155,203 +166,235 @@
     </div>
 </div>
 
-
-
-
-
-
-
 <!-- JavaScript Section -->
 <script>
-    // Get all sticker status elements
-    function getStatusColor(expiryDate) {
-        const currentDate = new Date();
-        const expiry = new Date(expiryDate);
-        const timeDiff = expiry - currentDate;
-        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    // Function to open the renew sticker modal
+function showRenewStickerModal(stickerId) {
+    document.getElementById('renew-sticker-id').value = stickerId;
+    document.getElementById('renew-sticker-modal').style.display = 'block';
+}
 
-        if (daysDiff > 14) {
-            return { color: 'green', text: 'Good' };
-        } else if (daysDiff > 0 && daysDiff <= 14) {
-            return { color: 'yellow', text: 'Near Expiry' };
-        } else {
-            return { color: 'red', text: 'Expired' };
-        }
+// Function to close the renew sticker modal
+function closeRenewStickerModal() {
+    document.getElementById('renew-sticker-modal').style.display = 'none';
+}
+
+// Function to submit the renew sticker form
+function submitRenewStickerForm(event) {
+    event.preventDefault();
+    const stickerId = document.getElementById('renew-sticker-id').value;
+    const newExpiryDate = document.getElementById('new-expiry-date').value;
+
+    const stickerCard = document.getElementById(`sticker-${stickerId}`);
+    const statusElement = stickerCard.querySelector('.sticker-status');
+    const statusButton = stickerCard.querySelector('.btn-status');
+
+    // Update the data-expiry-date attribute
+    statusElement.setAttribute('data-expiry-date', newExpiryDate);
+    statusButton.setAttribute('data-expiry-date', newExpiryDate);
+
+    // Update the status
+    const statusInfo = getStatusColor(newExpiryDate);
+    statusElement.textContent = statusInfo.text;
+    statusElement.style.color = statusInfo.color;
+    statusButton.style.backgroundColor = statusInfo.color;
+    statusButton.textContent = `Sticker Status: ${statusInfo.text}`;
+
+    closeRenewStickerModal();
+}
+
+// Function to get the status color and text based on expiry date
+function getStatusColor(expiryDate) {
+    const currentDate = new Date();
+    const expiry = new Date(expiryDate);
+    const timeDiff = expiry - currentDate;
+    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    if (daysDiff > 30) {
+        return { color: 'green', text: 'Good' };
+    } else if (daysDiff <= 30 && daysDiff > 14) {
+        return { color: 'yellow', text: 'Must Renew Soon' };
+    } else if (daysDiff <= 14 && daysDiff >= 0) {
+        return { color: 'orange', text: 'Renew Now' };
+    } else {
+        return { color: 'red', text: 'Expired' };
     }
+}
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const vehicleRegistrationForm = document.getElementById('vehicle-registration-form');
-        const userIdInput = document.getElementById('userId');
+document.addEventListener('DOMContentLoaded', function () {
+    const vehicleRegistrationForm = document.getElementById('vehicle-registration-form');
+    const userIdInput = document.getElementById('userId');
+    
+    // Set the userId from localStorage
+    userIdInput.value = localStorage.getItem('userId');
 
-        // Set the userId from localStorage
-        userIdInput.value = localStorage.getItem('userId');
-
-        vehicleRegistrationForm.addEventListener('submit', async function (event) {
-            if (!userIdInput.value) {
-                event.preventDefault();
-                alert('User ID is missing. Please log in again.');
-                return;
-            }
-
+    vehicleRegistrationForm.addEventListener('submit', async function (event) {
+        if (!userIdInput.value) {
             event.preventDefault();
-            const formData = new FormData(vehicleRegistrationForm);
-
-            try {
-                const response = await fetch(vehicleRegistrationForm.action, {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    const vehicleGrid = document.getElementById('vehicles-grid');
-                    const newVehicleCard = document.createElement('div');
-                    newVehicleCard.className = 'vehicle-card';
-                    newVehicleCard.id = `vehicle-${result.id}`;
-                    newVehicleCard.setAttribute('data-color', result.vehicleColor);
-                    newVehicleCard.setAttribute('data-type', result.vehicleType);
-                    newVehicleCard.setAttribute('data-manufacturer', result.vehicleManufacturer);
-                    newVehicleCard.setAttribute('data-equipped', result.isEquipped); // Add equip status
-                    newVehicleCard.onclick = () => showEditForm(result.id);
-
-                    newVehicleCard.innerHTML = `
-                        <div class="car-image">
-                            <img src="${result.vehicleImageUrl || '/static/images/default-car.png'}" alt="Vehicle Image">
-                        </div>
-                        <div class="vehicle-info">
-                            <h4>${result.vehicleManufacturer} ${result.vehicleType}</h4>
-                        </div>
-                    `;
-
-                    vehicleGrid.appendChild(newVehicleCard);
-                    closeRegisterVehicleModal();
-                } else {
-                    const error = await response.json();
-                    alert('Error: ' + (error.message || 'Failed to register vehicle.'));
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An unexpected error occurred.');
-            }
-        });
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        // Update the UI with the correct equip status
-        const vehicleCards = document.querySelectorAll('.vehicle-card');
-
-        vehicleCards.forEach(vehicleCard => {
-            const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
-
-            if (isEquipped) {
-                vehicleCard.style.border = "3px solid green";  // Green outline when equipped
-            } else {
-                vehicleCard.style.border = "";  // No outline when unequipped
-            }
-        });
-
-        // Handle equip button text in edit form modal when opened
-        const equipButton = document.getElementById('equip-button');
-        const vehicleId = document.getElementById('vehicle-id').value;
-        const vehicleCard = document.getElementById(`vehicle-${vehicleId}`);
-
-        // If a valid vehicle card is found, update the equip button text
-        if (vehicleCard) {
-            const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
-            equipButton.textContent = isEquipped ? 'Unequip' : 'Equip';
+            alert('User ID is missing. Please log in again.');
+            return;
         }
-    });
 
-    // Function to toggle equip status and update UI
-    async function toggleEquipStatusInModal() {
-        const vehicleId = document.getElementById('vehicle-id').value;
-        const equipButton = document.getElementById('equip-button');
-        const isEquipped = equipButton.textContent === 'Equip';
+        event.preventDefault();
+        const formData = new FormData(vehicleRegistrationForm);
 
         try {
-            const response = await fetch('/api/equip_vehicle/', {
+            const response = await fetch(vehicleRegistrationForm.action, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken(),
-                },
-                body: JSON.stringify({
-                    vehicleId: parseInt(vehicleId),  // Ensure vehicleId is an integer
-                    isEquipped: isEquipped,          // Send equip status (true or false)
-                }),
+                body: formData,
             });
 
             if (response.ok) {
                 const result = await response.json();
+                const vehicleGrid = document.getElementById('vehicles-grid');
+                const newVehicleCard = document.createElement('div');
+                newVehicleCard.className = 'vehicle-card';
+                newVehicleCard.id = `vehicle-${result.id}`;
+                newVehicleCard.setAttribute('data-color', result.vehicleColor);
+                newVehicleCard.setAttribute('data-type', result.vehicleType);
+                newVehicleCard.setAttribute('data-manufacturer', result.vehicleManufacturer);
+                newVehicleCard.setAttribute('data-equipped', result.isEquipped); // Add equip status
+                newVehicleCard.onclick = () => showEditForm(result.id);
 
-                // Update the equip button text based on the response
-                equipButton.textContent = result.isEquipped ? 'Unequip' : 'Equip';
+                newVehicleCard.innerHTML = `
+                    <div class="car-image">
+                        <img src="${result.vehicleImageUrl || '/static/images/default-car.png'}" alt="Vehicle Image">
+                    </div>
+                    <div class="vehicle-info">
+                        <h4>${result.vehicleManufacturer} ${result.vehicleType}</h4>
+                    </div>
+                `;
 
-                // Update the vehicle card in the grid to reflect the equip status
-                const vehicleCard = document.getElementById(`vehicle-${vehicleId}`);
-                if (vehicleCard) {
-                    vehicleCard.setAttribute('data-equipped', result.isEquipped);
-
-                    // Add/remove outline based on equip status
-                    if (result.isEquipped) {
-                        vehicleCard.style.border = "3px solid green";  // Green outline when equipped
-                    } else {
-                        vehicleCard.style.border = "";  // No outline when unequipped
-                    }
-                }
-
-                alert(`Vehicle ${vehicleId} is now ${result.isEquipped ? 'equipped' : 'unequipped'}.`);
+                vehicleGrid.appendChild(newVehicleCard);
+                closeRegisterVehicleModal();
             } else {
                 const error = await response.json();
-                alert(`Error: ${error.error || 'Failed to toggle equip status.'}`);
+                alert('Error: ' + (error.message || 'Failed to register vehicle.'));
             }
         } catch (error) {
             console.error('Error:', error);
             alert('An unexpected error occurred.');
         }
+    });
+
+    // Update the UI with the correct sticker status
+    const stickerCards = document.querySelectorAll('.sticker-card');
+
+    stickerCards.forEach(stickerCard => {
+        const expiryDate = stickerCard.querySelector('.sticker-status').getAttribute('data-expiry-date');
+        const statusInfo = getStatusColor(expiryDate);
+
+        // Update the sticker status text and color
+        const stickerStatus = stickerCard.querySelector('.sticker-status');
+        stickerStatus.textContent = statusInfo.text;
+        stickerStatus.style.color = statusInfo.color;
+
+        // Update the status button color and text
+        const statusButton = stickerCard.querySelector('.btn-status');
+        statusButton.style.backgroundColor = statusInfo.color;
+        statusButton.textContent = `Sticker Status: ${statusInfo.text}`;
+    });
+
+    // Handle equip button text in edit form modal when opened
+    const equipButton = document.getElementById('equip-button');
+    const vehicleId = document.getElementById('vehicle-id').value;
+    const vehicleCard = document.getElementById(`vehicle-${vehicleId}`);
+
+    // If a valid vehicle card is found, update the equip button text
+    if (vehicleCard) {
+        const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
+        equipButton.textContent = isEquipped ? 'Unequip' : 'Equip';
     }
+});
 
-    function getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]').value;
-    }
+// Function to toggle equip status and update UI
+async function toggleEquipStatusInModal() {
+    const vehicleId = document.getElementById('vehicle-id').value;
+    const equipButton = document.getElementById('equip-button');
+    const isEquipped = equipButton.textContent === 'Equip';
 
-    function showRegisterVehicleModal() {
-        document.getElementById('register-vehicle-modal').style.display = 'block';
-    }
+    try {
+        const response = await fetch('/api/equip_vehicle/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({
+                vehicleId: parseInt(vehicleId),  // Ensure vehicleId is an integer
+                isEquipped: isEquipped,          // Send equip status (true or false)
+            }),
+        });
 
-    function closeRegisterVehicleModal() {
-        document.getElementById('register-vehicle-modal').style.display = 'none';
-    }
+        if (response.ok) {
+            const result = await response.json();
 
-    function showEditForm(vehicleId) {
-        const vehicleCard = document.querySelector(`#vehicle-${vehicleId}`);
-        if (vehicleCard) {
-            const manufacturer = vehicleCard.getAttribute('data-manufacturer');
-            const color = vehicleCard.getAttribute('data-color');
-            const type = vehicleCard.getAttribute('data-type');
-            const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
+            // Update the equip button text based on the response
+            equipButton.textContent = result.isEquipped ? 'Unequip' : 'Equip';
 
-            document.getElementById('vehicle-id').value = vehicleId;
-            document.getElementById('edit-manufacturer').value = manufacturer;
-            document.getElementById('edit-color').value = color;
-            document.getElementById('edit-type').value = type;
+            // Update the vehicle card in the grid to reflect the equip status
+            const vehicleCard = document.getElementById(`vehicle-${vehicleId}`);
+            if (vehicleCard) {
+                vehicleCard.setAttribute('data-equipped', result.isEquipped);
 
-            const equipButton = document.getElementById('equip-button');
-            equipButton.textContent = isEquipped ? 'Unequip' : 'Equip';
+                // Add/remove outline based on equip status
+                if (result.isEquipped) {
+                    vehicleCard.style.border = "3px solid green";  // Green outline when equipped
+                } else {
+                    vehicleCard.style.border = "";  // No outline when unequipped
+                }
+            }
 
-            document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
-            document.getElementById('edit-form').style.display = 'block';
+            alert(`Vehicle ${vehicleId} is now ${result.isEquipped ? 'equipped' : 'unequipped'}.`);
         } else {
-            console.error('Vehicle card not found');
+            const error = await response.json();
+            alert(`Error: ${error.error || 'Failed to toggle equip status.'}`);
         }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An unexpected error occurred.');
     }
+}
 
-    function cancelEdit() {
-        document.getElementById('edit-form').style.display = 'none';
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function showRegisterVehicleModal() {
+    document.getElementById('register-vehicle-modal').style.display = 'block';
+}
+
+function closeRegisterVehicleModal() {
+    document.getElementById('register-vehicle-modal').style.display = 'none';
+}
+
+function showEditForm(vehicleId) {
+    const vehicleCard = document.querySelector(`#vehicle-${vehicleId}`);
+    if (vehicleCard) {
+        const manufacturer = vehicleCard.getAttribute('data-manufacturer');
+        const color = vehicleCard.getAttribute('data-color');
+        const type = vehicleCard.getAttribute('data-type');
+        const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
+
+        document.getElementById('vehicle-id').value = vehicleId;
+        document.getElementById('edit-manufacturer').value = manufacturer;
+        document.getElementById('edit-color').value = color;
+        document.getElementById('edit-type').value = type;
+
+        const equipButton = document.getElementById('equip-button');
+        equipButton.textContent = isEquipped ? 'Unequip' : 'Equip';
+
+        document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
+        document.getElementById('edit-form').style.display = 'block';
+    } else {
+        console.error('Vehicle card not found');
     }
+}
+
+function cancelEdit() {
+    document.getElementById('edit-form').style.display = 'none';
+}
 </script>
-
-
 
 <style>
     /* General Styles */
@@ -370,85 +413,25 @@ body {
 }
 
 .header-section {
-
-
-
-position: fixed;
-
-
-
-top: 80px;
-
-
-
-left: 0;
-
-
-
-height: 150px;
-
-
-
-width: 100%;
-
-
-
-display: flex;
-
-
-
-justify-content: space-between;
-
-
-
-align-items: center;
-
-
-
-padding: 10px 20px;
-
-
-
-background-color: #600000;
-
-
-
-color: white;
-
-
-
-z-index: 1000;
-
-
-
-padding: 0;
-
-
-
+    position: fixed;
+    top: 80px;
+    left: 0;
+    height: 150px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #600000;
+    color: white;
+    z-index: 1000;
+    padding: 0;
 }
 
-
-
-
-
-
-
 .header-image {
-
-
-
-width: 100%;
-
-
-
-height: 100%;
-
-
-
-object-fit: cover;
-
-
-
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 .header-section h2 {
     margin: 0;
@@ -464,12 +447,12 @@ object-fit: cover;
 
 /* Sticker Section */
 .stickers-list {
-    display: flex; /* Use flexbox for alignment */
-    flex-direction: column; /* Stack the cards vertically */
-    align-items: center; /* Center the cards horizontally */
-    gap: 15px; /* Add consistent spacing between the cards */
-    width: 100%; /* Optional: Ensures full-width for the container */
-    margin: 0 auto; /* Center the container itself */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .sticker-card {
@@ -478,19 +461,19 @@ object-fit: cover;
     background-color: #f5f5f5;
     text-align: left;
     display: flex;
-    flex-direction: column; /* Keep the content stacked vertically */
-    width: 900px; /* Set consistent width */
-    transition: transform 0.3s, box-shadow 0.3s; /* Smoother hover animation */
+    flex-direction: column;
+    width: 900px;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .sticker-info {
-    margin-bottom: 10px; /* Space between the sticker info and buttons */
+    margin-bottom: 10px;
 }
 
 .sticker-actions {
-    display: flex; /* Align buttons horizontally */
-    justify-content: flex-start; /* Align buttons to the left */
-    gap: 10px; /* Space between buttons */
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
 }
 
 /* Vehicles Section */
@@ -508,25 +491,25 @@ object-fit: cover;
     padding: 15px;
     text-align: center;
     background-color: white;
-    width: 260px; /* Set consistent width */
+    width: 260px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s; /* Smoother hover animation */
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .vehicle-image {
-    width: 70%; /* Adjust this to control the image width (e.g., 70% of the card's width) */
-    height: auto; /* Maintain aspect ratio */
-    max-height: 100px; /* Limit the image height (optional) */
-    object-fit: contain; /* Ensure the image fits without distortion */
-    margin-bottom: 10px; /* Optional: Add space between the image and the vehicle info */
+    width: 70%;
+    height: auto;
+    max-height: 100px;
+    object-fit: contain;
+    margin-bottom: 10px;
 }
 
 .vehicle-card:hover, .sticker-card:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 1);
 }
 
+/* Add Vehicle Card */
 .add-vehicle-card {
     display: flex;
     flex-direction: column;
@@ -541,19 +524,6 @@ object-fit: cover;
     font-size: 2.5rem;
     margin-bottom: 10px;
 }
-
-/* .vehicle-info h4 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 5px;
-}  */
-
-/* .vehicle-info p {
-    font-size: 0.9rem;
-    color: #555;
-    margin: 0;
-} */
 
 /* Buttons */
 .btn-status, .btn-renew, .btn-remove, .btn-primary, .btn-secondary {
@@ -594,7 +564,7 @@ object-fit: cover;
     opacity: 0.9;
 }
 
-/* Modal */
+/* Modal Overlay */
 .modal {
     display: none;
     position: fixed;
@@ -603,45 +573,157 @@ object-fit: cover;
     top: 0;
     width: 100%;
     height: 100%;
+    background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent overlay */
+    backdrop-filter: blur(8px); /* Smooth blur effect */
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6);
+    transition: opacity 0.4s ease;
 }
 
+/* Modal Content */
 .modal-content {
-    background-color: #fff;
-    margin: 15% auto;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    background-color: #dbdbdb;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* Deep shadow for depth */
+    animation: fadeIn 0.4s ease-in-out;
+    font-family: 'Arial', sans-serif;
+    max-width: 500px; /* Set a smaller max-width */
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    transition: transform 0.3s ease, opacity 0.3s ease; /* Added smooth entry transition */
+    margin: auto; /* Center modal */
 }
 
-.modal-content h3 {
-    margin-top: 0;
-    color: #333;
-    font-size: 1.5rem;
-}
-
-.close {
-    color: #aaa;
-    float: right;
+/* Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 1.5rem;
     font-weight: bold;
+    color: #333;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
 }
 
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
+/* Close Button Styling */
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: #333;
     cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease;
 }
+
+.modal-close:hover {
+    color: #f44336;
+    transform: scale(1.1); /* Slight zoom effect */
+}
+
+/* Modal Body */
+.modal-body {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    color: #444;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+/* Input Fields and Textareas */
+.modal-content input[type="text"], 
+.modal-content input[type="email"], 
+.modal-content input[type="number"],
+.modal-content textarea {
+    width: 100%;
+    padding: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    color: #333;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Focus effect on input fields */
+.modal-content input[type="text"]:focus, 
+.modal-content input[type="email"]:focus, 
+.modal-content input[type="number"]:focus, 
+.modal-content textarea:focus {
+    border-color: #0073e6;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 115, 230, 0.3); /* Soft glow effect on focus */
+}
+
+/* Textarea specific styling */
+.modal-content textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Buttons */
+.modal-footer button {
+    padding: 12px 25px; /* Larger button for better usability */
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    display: inline-block;
+    margin-left: 15px;
+}
+
+/* Primary Button */
+.modal-footer .btn-primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.modal-footer .btn-primary:hover {
+    background-color: #45A049;
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+/* Secondary Button */
+.modal-footer .btn-secondary {
+    background-color: #f44336;
+    color: white;
+}
+
+.modal-footer .btn-secondary:hover {
+    background-color: #e53935;
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+/* Modal Footer */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+}
+
+/* Header Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 
 /* Sticker Status */
 .sticker-status {
     font-weight: bold;
     font-size: 1rem;
-    margin-right: 10px; /* Add space between the status text and buttons */
+    margin-right: 10px;
 }
 
 .sticker-status[data-expiry-date] {
@@ -650,24 +732,25 @@ object-fit: cover;
 }
 
 .car-image {
-    width: 100px; /* Set the desired width */
-    height: 100px; /* Set the desired height */
-    overflow: hidden; /* Ensure the image doesn't overflow */
-    border-radius: 8px; /* Optional: Add rounded corners */
-    margin: auto; /* Center the image horizontally */
-    display: flex; /* Enable centering of the image content */
-    justify-content: center; /* Center content horizontally */
-    align-items: center; /* Center content vertically */
+    width: 100px; 
+    height: 100px; 
+    overflow: hidden; 
+    border-radius: 8px; 
+    margin: auto; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
 }
 
 .car-image img {
-    max-width: 100%; /* Ensure the image fits within the container */
-    max-height: 100%; /* Maintain aspect ratio */
-    object-fit: cover; /* Ensure the image fills the container without stretching */
+    max-width: 100%; 
+    max-height: 100%; 
+    object-fit: contain; 
 }
 
-
-</style>
+    </style>
+    
+    
 
 
 {% endblock %}

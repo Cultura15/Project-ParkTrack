@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Parking Area</title>
+</head>
+<body>
+    <h1>Delete Parking Area</h1>
+    <p>Are you sure you want to delete "{{ parking_area.parking_location }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Confirm</button>
+    </form>
+    <a href="{% url 'parking_area_list' %}">Cancel</a>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parking Areas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .area {
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        a, button {
+            text-decoration: none;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        .add-button {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .add-button:hover {
+            background-color: #27ae60;
+        }
+        .status-button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 3px;
+            background-color: #e74c3c;
+            color: white;
+            cursor: pointer;
+        }
+        .status-button:hover {
+            background-color: #c0392b;
+        }
+        .view-button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 3px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .view-button:hover {
+            background-color: #2980b9;
+        }
+        .empty-message {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .alert-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .alert-error {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Parking Areas</h1>
+
+    <!-- Display messages as alerts -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Button to add a new parking area -->
+    <a href="{% url 'parking_area_create' %}" class="add-button">Add New Parking Area</a>
+
+    <div id="parking-areas">
+        {% for area in parking_areas %}
+            <div class="area">
+                <h2>{{ area.parking_location }}</h2>
+                <p><strong>Total Lots:</strong> {{ area.parking_lots.count }}</p>
+                
+                <!-- Edit and Delete buttons -->
+                <a href="{% url 'parking_area_update' area.pk %}" class="view-button">Edit</a>
+                <form action="{% url 'parking_area_delete' area.pk %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="status-button">Delete</button>
+                </form>
+                
+                <!-- View lots button -->
+                <a href="{% url 'parking_lot_list' area.pk %}" class="view-button">View Parking Lots</a>
+                
+                <!-- Add parking lot button -->
+                <a href="{% url 'parking_lot_create' area_id=area.parking_area_id %}" class="view-button">Add New Parking Lot</a>
+
+            </div>
+        {% empty %}
+            <p class="empty-message">No parking areas available. Start by adding a new parking area.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

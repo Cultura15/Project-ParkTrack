@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Parking Reservation - ParkTrack{% endblock %}
+
+{% block content %}
+
+  <main class="main">
+
+    <div class="header-section">
+      <img src="{% static 'parkStatus.png' %}" alt="sm" class="header-image">
+  </div>
+
+   
+
+    <div class="reservation">
+      <div class="form">
+        <form id="reservation-form">
+          {% csrf_token %}
+          <label for="location">Location</label>
+          <select id="id_parking_area" name="parking_area">
+            <option value="">Select Location</option>
+          </select>
+
+          <label id="lot-label" for="lot">Lot Number</label>
+          <select id="id_parking_lot" name="parking_lot">
+            <option value="">Select Lot</option>
+          </select>
+
+          <div class="date-time">
+            <label for="entry-date">Entry Date</label>
+            <input type="date" id="entry-date" name="entry_date" />
+            <label for="entry-time">Entry Time</label>
+            <input type="time" id="entry-time" name="entry_time" />
+          </div>
+          <div class="date-time">
+            <label for="exit-date">Exit Date</label>
+            <input type="date" id="exit-date" name="exit_date" />
+            <label for="exit-time">Exit Time</label>
+            <input type="time" id="exit-time" name="exit_time" />
+          </div>
+
+          <button class="confirm-btn" type="submit">Confirm</button>
+        </form>
+      </div>
+
+      <div class="map">
+        <h3>Mini Map</h3>
+        <img src="{% static 'parkingMap.png' %}" alt="map" class="map">
+      </div>
+    </div>
+
+    <div id="parking-lot-container">
+      <!-- Parking lots or confirmation message will be dynamically added here -->
+    </div>
+  </main>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const parkingAreaSelect = document.getElementById('id_parking_area');
+      const parkingLotDropdown = document.getElementById('id_parking_lot');
+      const form = document.getElementById('reservation-form');
+
+      fetch('/api/get-parking-areas/')
+        .then(response => response.json())
+        .then(data => {
+          parkingAreaSelect.innerHTML = '<option value="">Select Location</option>';
+          data.parking_areas.forEach(area => {
+            const option = document.createElement('option');
+            option.value = area.parking_area_id;
+            option.textContent = area.parking_location;
+            parkingAreaSelect.appendChild(option);
+          });
+        });
+
+      parkingAreaSelect.addEventListener('change', function () {
+        const areaId = this.value;
+        fetch(`/api/get-parking-lots/${areaId}/`)
+          .then(response => response.json())
+          .then(data => {
+            parkingLotDropdown.innerHTML = data.parking_lots
+              .filter(lot => lot.status !== "Occupied")
+              .map(lot => `<option value="${lot.id}">Lot ${lot.parking_lot_number}</option>`)
+              .join('');
+          });
+      });
+
+      form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch('/api/reservation/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',  
+        'X-CSRFToken': csrfToken, 
+    },
+    body: JSON.stringify({
+        parking_area: document.getElementById('id_parking_area').value,  
+        parking_lot: document.getElementById('id_parking_lot').value,
+        entry_date: document.getElementById('entry-date').value,
+        entry_time: document.getElementById('entry-time').value,
+        exit_date: document.getElementById('exit-date').value,
+        exit_time: document.getElementById('exit-time').value,
+    })
+})
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        window.location.href = data.confirmation_url;
+    } else {
+        console.error('Form errors:', data.errors);
+    }
+})
+.catch(error => {
+    console.error('Error:', error);
+});
+
+});
+    });
+  </script>
+
+<style>
+  /* General Reset */
+
+  .header-section {
+
+
+
+position: fixed;
+
+
+
+top: 80px;
+
+
+
+left: 0;
+
+
+
+height: 150px;
+
+
+
+width: 100%;
+
+
+
+display: flex;
+
+
+
+justify-content: space-between;
+
+
+
+align-items: center;
+
+
+
+padding: 10px 20px;
+
+
+
+background-color: #600000;
+
+
+
+color: white;
+
+
+
+z-index: 1000;
+
+
+
+padding: 0;
+
+
+
+}
+
+
+
+
+
+
+
+.header-image {
+
+
+
+width: 100%;
+
+
+
+height: 100%;
+
+
+
+object-fit: cover;
+
+
+
+}
+
+
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #800000;
+    color: #fff;
+    padding: 1rem 2rem;
+  }
+
+  .header .logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .header .logo img {
+    width: 50px;
+    height: 50px;
+    margin-right: 0.5rem;
+  }
+
+  .header .logo h1 {
+    font-size: 1.5rem;
+  }
+
+  .header .logo span {
+    font-weight: bold;
+  }
+
+  .search-bar input {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    width: 200px;
+  }
+
+  .banner {
+    background-color: lightgray;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .banner h2 {
+    font-size: 2rem;
+    color: #800000;
+  }
+
+  .banner h2 span {
+    color: #ffc107;
+  }
+
+  .banner p {
+    margin: 1rem 0;
+    font-size: 1rem;
+    color: #666;
+  }
+
+  .banner img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 1rem;
+  }
+
+  .reservation {
+    margin-top: 150px;
+    display: flex;
+    width: 100%;
+  }
+
+  .form {
+    flex: 1;
+    background: #fff;
+    width: 100%;
+    padding: 5.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    margin-top: 12px;
+  }
+
+  .form input, .form select {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .date-time {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .confirm-btn {
+    background-color: #F0574D;
+    color: #fff;
+    border: none;
+    padding: 0.75rem;
+    width: 40%;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 20px;
+  }
+
+  .map {
+    flex: 1;
+    text-align: center;
+    background: #fff;
+  }
+
+  .map h3 {
+    margin-top: 50px;
+  }
+
+  .map img {
+    max-width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 1rem;
+  }
+
+  /* Parking Lot Styling */
+  #parking-lot-container {
+    margin-top: 20px;
+  }
+
+  .parking-lot {
+    background-color: #f0f0f0;
+    margin: 5px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+</style>
+
+
+
+
+{% endblock %}
+

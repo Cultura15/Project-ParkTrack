@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}News & Updates - ParkTrack{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+    <!-- Title Section -->
+    <header style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.25rem; font-weight: bold; color: #e3342f;">
+            News & <span style="color: #38a169;">Updates</span>
+        </h1>
+    </header>
+
+    <!-- Main Content: Split Layout -->
+    <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Left Section: Main Posts -->
+        <section style="flex: 0.7; display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Post: University Days - Parking Updates -->
+            <article style="background-color: #9a83b1; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">University Days - Parking Updates</h2>
+                <div style="display: flex; flex-direction: row; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <img src="{% static 'images/university-days.jpg' %}" alt="University Days" style="border-radius: 0.5rem; width: 100%; height: auto; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin-bottom: 1rem;">Get ready for the upcoming University Days! Check out the latest parking updates to plan your visit.</p>
+                        <p style="color: #e3342f; font-weight: bold;">Note: Parking areas A-F will only be accessible for attendees with event passes. Please park accordingly to ensure a smooth event day.</p>
+                        <a href="#" style="display: inline-block; background-color: #0073e6; color: white; padding: 10px 20px; font-size: 0.9rem; border-radius: 5px; text-decoration: none; transition: background-color 0.2s;">Read More</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Post: Working Committees Acquaintance Party -->
+            <article style="background-color: #9a83b1; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">Working Committees Acquaintance Party</h2>
+                <div style="display: flex; flex-direction: row; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <img src="{% static 'images/working-committees.jpg' %}" alt="Working Committees" style="border-radius: 0.5rem; width: 100%; height: auto; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin-bottom: 1rem;">The Working Committees are hosting an acquaintance party. Get to know your fellow committee members and collaborate on upcoming projects.</p>
+                        <a href="#" style="display: inline-block; background-color: #0073e6; color: white; padding: 10px 20px; font-size: 0.9rem; border-radius: 5px; text-decoration: none; transition: background-color 0.2s;">Read More</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Post: BS in Nursing Graduation -->
+            <article style="background-color: #9a83b1; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">BS in Nursing Graduation AY2023-2024</h2>
+                <div style="display: flex; flex-direction: row; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <img src="{% static 'images/nursing-graduation.jpg' %}" alt="Nursing Graduation" style="border-radius: 0.5rem; width: 100%; height: auto; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin-bottom: 1rem;">Congratulations to our latest batch of nursing graduates! We're proud of your hard work and dedication.</p>
+                        <a href="#" style="display: inline-block; background-color: #0073e6; color: white; padding: 10px 20px; font-size: 0.9rem; border-radius: 5px; text-decoration: none; transition: background-color 0.2s;">Read More</a>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <!-- Right Section: Additional Posts -->
+        <aside style="flex: 0.3; display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Post: New Parking Area -->
+            <article style="background-color: #9a83b1; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">New Parking Area Available Near Back Gate Opening Soon!</h2>
+                <div style="display: flex; flex-direction: row; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <img src="{% static 'images/new-parking-area.jpg' %}" alt="New Parking Area" style="border-radius: 0.5rem; width: 100%; height: auto; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin-bottom: 1rem;">A new parking area has been opened near the back gate for additional parking space. More spaces will be available soon!</p>
+                        <a href="#" style="display: inline-block; background-color: #0073e6; color: white; padding: 10px 20px; font-size: 0.9rem; border-radius: 5px; text-decoration: none; transition: background-color 0.2s;">Read More</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Post: Wildcats Sticker Available -->
+            <article style="background-color: #9a83b1; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">Wildcats Sticker Available Now! 200 Stocks Left, Grab Yours Now!</h2>
+                <div style="display: flex; flex-direction: row; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <img src="{% static 'images/wildcats-sticker.jpg' %}" alt="Wildcats Sticker" style="border-radius: 0.5rem; width: 100%; height: auto; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin-bottom: 1rem;">Get your Wildcats sticker now while stocks last! Available near the back gate.</p>
+                        <a href="#" style="display: inline-block; background-color: #0073e6; color: white; padding: 10px 20px; font-size: 0.9rem; border-radius: 5px; text-decoration: none; transition: background-color 0.2s;">Read More</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Post: Shuttle Service to SM Seaside -->
+            <article style="background-color: #9a83b1; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">Shuttle Service to SM Seaside!</h2>
+                <div style="display: flex; flex-direction: row; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <img src="{% static 'images/shuttle-service.jpg' %}" alt="Shuttle Service" style="border-radius: 0.5rem; width: 100%; height: auto; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin-bottom: 1rem;">Enjoy convenient shuttle service from the campus to SM Seaside for your shopping and leisure needs!</p>
+                        <a href="#" style="display: inline-block; background-color: #0073e6; color: white; padding: 10px 20px; font-size: 0.9rem; border-radius: 5px; text-decoration: none; transition: background-color 0.2s;">Read More</a>
+                    </div>
+                </div>
+            </article>
+        </aside>
+        
+    </div>
+</div>
+<!-- Logo Placeholder and Heading -->
+<div style="text-align: center; margin-top: 2rem;">
+    <img src="{% static 'images/logo-placeholder.png' %}" alt="Logo Placeholder" style="width: 100px; height: auto; margin-bottom: 1rem;">
+    <h1 style="font-size: 2rem; font-weight: bold;">More Updates Soon!</h1>
+</div>
+
+{% endblock %}

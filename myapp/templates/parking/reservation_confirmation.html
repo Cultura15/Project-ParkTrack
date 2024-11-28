@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Confirmation</title>
+</head>
+<body>
+
+    <h2>Reservation Confirmation</h2>
+    <p>Your reservation has been successfully confirmed!</p>
+
+    <h3>Reservation Details</h3>
+    <p><strong>Parking Area:</strong> {{ reservation.parking_area.name }}</p>
+    <p><strong>Parking Lot:</strong> Lot {{ reservation.parking_lot.parking_lot_number }}</p>
+    <p><strong>Entry Date:</strong> {{ reservation.entry_date }}</p>
+    <p><strong>Entry Time:</strong> {{ reservation.entry_time }}</p>
+    <p><strong>Exit Date:</strong> {{ reservation.exit_date }}</p>
+    <p><strong>Exit Time:</strong> {{ reservation.exit_time }}</p>
+
+    <p>Thank you for your reservation!</p>
+
+</body>
+</html>

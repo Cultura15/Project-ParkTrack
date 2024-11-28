@@ -1,14 +1,22 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Vehicle, Sticker
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, Http404,  HttpResponseServerError
-from django.views.decorators.csrf import csrf_exempt, csrf_protect  
 from django.contrib.auth.hashers import make_password
-from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_http_methods
-import json, logging, requests
+from django.http import JsonResponse, Http404, HttpResponseServerError
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.http import require_http_methods, require_POST
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.contrib import messages
+from django.middleware.csrf import get_token
+import json
+import logging
+import requests
+
+from .models import User, Vehicle, Sticker, ParkingArea, ParkingLot, Reservation
+from .forms import ParkingAreaForm, ParkingLotForm, ReservationForm
+
 
 # Home localhost
 def home(request):
@@ -263,6 +271,8 @@ def update_user(request):
             return JsonResponse({'error': 'User not found'}, status=404)
         
 
+####### NAVIGATION #####
+
 def parkingMap(request):
     return render(request, 'parkingMap.html')
 
@@ -274,6 +284,24 @@ def parkReserve(request):
 
 def accountSettings(request):
     return render(request, 'account.html')
+
+def news(request):
+    return render(request, 'news.html')
+
+def map_view(request):
+    context = {
+        'latitude': 10.295559,  # Center latitude (average of north and south)
+        'longitude': 123.880658,  # Center longitude (average of east and west)
+        'zoom': 10,  # Adjusted zoom level for close view
+        'bounds': {  # Define the bounding box for the map
+            'north': 10.295951988147875,
+            'south': 10.293841944776801, 
+            'west': 123.87978786269375,
+            'east': 123.8817703943783,
+        }
+    }
+    return render(request, 'tryingMap.html', context)
+
         
 
 
@@ -281,7 +309,7 @@ def accountSettings(request):
 
 ##############################################################################################################################################
 
-##### ARTEZUELA #####
+##### VEHICLE #####
 
 def sticker_management(request):
     try:
@@ -532,7 +560,298 @@ def renew_sticker(request, sticker_id):
 
 #######################################################################################################################################################
 
-##### DESTURA #####
+##### PARKING AREA #####
+
+logger = logging.getLogger(__name__)
+
+
+# Parking Area Views
+def parking_area_list(request):
+    parking_areas = ParkingArea.objects.all()
+    return render(request, 'parking/parking_area_list.html', {'parking_areas': parking_areas})
+
+def parking_area_create(request):
+    if request.method == 'POST':
+        form = ParkingAreaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('parking_area_list')
+    else:
+        form = ParkingAreaForm()
+    return render(request, 'parking/parking_area_form.html', {'form': form})
+
+def parking_area_update(request, pk):
+    area = get_object_or_404(ParkingArea, pk=pk)
+    if request.method == 'POST':
+        form = ParkingAreaForm(request.POST, instance=area)
+        if form.is_valid():
+            form.save()
+            return redirect('parking_area_list')
+    else:
+        form = ParkingAreaForm(instance=area)
+    return render(request, 'parking/parking_area_form.html', {'form': form, 'area': area})
+
+def parking_area_delete(request, pk):
+    # Get the parking area by its primary key (pk)
+    area = get_object_or_404(ParkingArea, pk=pk)
+
+    # Check if the parking area has any associated parking lots
+    if area.parking_lots.exists():
+        # If there are parking lots, prevent deletion and show an error message
+        messages.error(request, "Cannot delete this parking area because it has associated parking lots.")
+        return redirect('parking_area_list')  # Redirect back to the list of parking areas
+
+    # If there are no parking lots, proceed with deletion
+    if request.method == 'POST':
+        area.delete()
+        messages.success(request, "Parking area deleted successfully.")
+        return redirect('parking_area_list')  # Redirect after successful deletion
+
+    # Render the confirmation page for deletion
+    return render(request, 'api/parking_area_confirm_delete.html', {'parking_area': area})
+
+# Parking Lot Views
+def parking_lot_list(request, area_id):
+    parking_area = get_object_or_404(ParkingArea, pk=area_id)
+    parking_lots = parking_area.parking_lots.all()  # Get parking lots for the specific parking area
+    print(parking_lots)  # Debugging step: check the list of parking lots
+    return render(request, 'parking/parking_lot_list.html', {
+        'parking_area': parking_area,
+        'parking_lots': parking_lots
+    })
+
+
+def parking_lot_create(request, area_id):
+    # Retrieve the parking area or return a 404 if not found
+    parking_area = get_object_or_404(ParkingArea, pk=area_id)
+    
+    if request.method == 'POST':
+        # Initialize the form with POST data and the parking area
+        form = ParkingLotForm(request.POST, parking_area=parking_area)
+        
+        if form.is_valid():
+            # Create a parking lot instance without saving it yet
+            parking_lot = form.save(commit=False)
+            parking_lot.parking_area = parking_area
+            parking_lot.save()
+            return redirect('parking_lot_list', area_id=area_id)
+        else:
+            # If the form is invalid, display the error message
+            error_message = form.errors.get('parking_lot_number', None)
+            return render(request, 'parking/parking_lot_form.html', {
+                'form': form,
+                'parking_area': parking_area,
+                'error_message': error_message,
+            })
+
+    else:
+        # Initialize the form without POST data
+        form = ParkingLotForm(parking_area=parking_area)
+
+    # Render the form with any existing error messages
+    return render(request, 'parking/parking_lot_form.html', {
+        'form': form,
+        'parking_area': parking_area,
+    })
+
+def render_parking_lot_form(request, form, parking_area, error_message=None):
+    """
+    Helper function to render the parking lot form with additional context.
+    """
+    existing_lot_numbers = ParkingLot.objects.filter(parking_area=parking_area).values_list('parking_lot_number', flat=True)
+    return render(request, 'parking/parking_lot_form.html', {
+        'form': form,
+        'parking_area': parking_area,
+        'existing_lot_numbers': existing_lot_numbers,
+        'error_message': error_message,
+    })
+
+def parking_lot_update(request, pk):
+    lot = get_object_or_404(ParkingLot, pk=pk)
+    parking_area = lot.parking_area  # Get the associated parking area
+    if request.method == 'POST':
+        form = ParkingLotForm(request.POST, instance=lot)
+        if form.is_valid():
+            form.save()
+            return redirect('parking_lot_list', area_id=parking_area.pk)
+    else:
+        form = ParkingLotForm(instance=lot)
+
+    return render(request, 'parking/parking_lot_form.html', {
+        'form': form,
+        'lot': lot,
+        'parking_area': parking_area,  # Pass the parking_area to the template
+    })
+from django.shortcuts import get_object_or_404, redirect, render
+from .models import ParkingLot
+
+def parking_lot_delete(request, pk):
+    # Get the parking lot by its primary key (pk)
+    lot = get_object_or_404(ParkingLot, pk=pk)
+
+    # Store the parking area id, so we can redirect to the list of parking lots for this area after deletion
+    parking_area = lot.parking_area  # The associated parking area of the lot
+
+    if request.method == 'POST':
+        lot.delete()  # Delete the parking lot
+        return redirect('parking_lot_list', area_id=parking_area.pk)  # Redirect to parking lot list for the area
+
+    # Render the delete confirmation page
+    return render(request, 'parking/parking_lot_confirm_delete.html', {'parking_lot': lot})
+
+
+# Toggle Parking Lot Status View
+@require_POST
+def toggle_parking_lot_status(request, pk):
+    lot = get_object_or_404(ParkingLot, pk=pk)
+    lot.parking_lot_status = 'occupied' if lot.parking_lot_status == 'vacant' else 'vacant'
+    lot.save()
+    return redirect(reverse('parking_area_list'))  # Adjust if the redirect should be to a specific area
+from django.http import JsonResponse
+from .models import ParkingArea
+
+# View to return parking areas with their parking lots as JSON
+def parking_areas_with_lots(request):
+    parking_areas = ParkingArea.objects.all()
+    data = []
+    for area in parking_areas:
+        # You can decide whether to fetch all or only available lots
+        lots = [{"id": lot.id, "parking_lot_number": lot.parking_lot_number, "is_available": lot.parking_lot_status == 'Available'} 
+                for lot in area.parking_lots.all()]
+        data.append({"id": area.parking_area_id, "parking_location": area.parking_location, "lots": lots})
+
+    return JsonResponse({"parking_areas": data})
+
+def available_lots(request, location_id):
+    parking_area = get_object_or_404(ParkingArea, pk=location_id)
+    available_parking_lots = parking_area.parking_lots.filter(parking_lot_status='Available')
+
+    data = [{
+        "id": lot.id,
+        "parking_lot_number": lot.parking_lot_number
+    } for lot in available_parking_lots]
+
+    return JsonResponse({"available_lots": data})
+
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+def reservation(request):
+    if request.method == 'POST':
+        # Ensure the user is logged in before allowing reservation
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "User must be logged in to make a reservation"}, status=401)
+
+        # Parse JSON body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        # Log the received data for debugging
+        logger.info("Received reservation data: %s", data)
+
+        # Create a ReservationForm instance using the parsed data
+        form = ReservationForm(data)
+
+        if form.is_valid():
+            # Save the reservation but do not commit to the database yet
+            reservation = form.save(commit=False)
+            reservation.user = request.user  # Associate the logged-in user with the reservation
+
+            # Get the parking lot associated with the reservation
+            parking_lot = reservation.parking_lot
+
+            # Check if the parking lot is available
+            if parking_lot.parking_lot_status == 'Occupied':
+                return JsonResponse({'error': 'The selected parking lot is already occupied.'}, status=400)
+
+            # Save the reservation
+            reservation.save()
+
+            # After saving, mark the parking lot as "Occupied"
+            parking_lot.parking_lot_status = 'Occupied'
+            parking_lot.save()
+
+            # Prepare the confirmation URL
+            confirmation_url = reverse('reservation_confirmation', kwargs={'pk': reservation.pk})
+            
+            # Respond with a success message and the confirmation URL
+            return JsonResponse({'success': True, 'confirmation_url': confirmation_url})
+
+        else:
+            # Log form errors and return them as part of the response
+            logger.error(f"Form validation failed with errors: {form.errors}")
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
+    else:
+        # For GET requests, render the reservation form
+        form = ReservationForm()
+        return render(request, 'parking/reservation.html', {'form': form})
+    
+def reservation_confirmation(request, pk):
+    logger.info(f"Reservation Confirmation View Triggered with PK: {pk}")
+    reservation = get_object_or_404(Reservation, pk=pk)
+    return render(request, 'parking/reservation_confirmation.html', {'reservation': reservation})
+
+def get_parking_areas(request):
+    # Get parking areas from the database
+    parking_areas = ParkingArea.objects.all()
+    # Return the parking areas in a JSON response
+    return JsonResponse({'parking_areas': list(parking_areas.values())})
+
+# View to get parking lots for a specific parking area
+
+logger = logging.getLogger(__name__)
+
+
+
+
+
+def get_parking_lots(request, area_id):
+    try:
+        # Retrieve the parking area by ID
+        parking_area = ParkingArea.objects.get(parking_area_id=area_id)
+        # Get all parking lots associated with this area
+        parking_lots = ParkingLot.objects.filter(parking_area=parking_area)
+        data = {
+            "parking_lots": [
+                {
+                    "id": lot.parking_lot_id,
+                    "parking_lot_number": lot.parking_lot_number,
+                    "status": lot.parking_lot_status
+                } for lot in parking_lots
+            ]
+        }
+        return JsonResponse(data)
+    except ParkingArea.DoesNotExist:
+        # If parking area not found, return an error message
+        return JsonResponse({"error": "Parking area not found"}, status=404)
+    
+
+def parking_area1(request):
+    # Any necessary context data for Parking Area 1
+    return render(request, 'parking/area1.html')
+
+def parking_area2(request):
+    # Any necessary context data for Parking Area 2
+    return render(request, 'parking/area2.html')
+
+def parking_area3(request):
+    # Any necessary context data for Parking Area 3
+    return render(request, 'parking/area3.html')
+
+def parking_area4(request):
+    # Any necessary context data for Parking Area 4
+    return render(request, 'parking/area4.html')    
+
+
+def reservation_view(request, area_id):
+    return render(request, 'area.html', {'area_id': area_id})
 
 
 
