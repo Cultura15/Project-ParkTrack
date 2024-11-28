@@ -18,23 +18,27 @@
     <div class="vehicles-grid" id="vehicles-grid">
         {% for vehicle in vehicles %}
         <div class="vehicle-card"
-            id="vehicle-{{ vehicle.id }}"
+            id="vehicle-{{ vehicle.vehicleId }}" 
             data-color="{{ vehicle.vehicleColor }}"
             data-type="{{ vehicle.vehicleType }}"
             data-manufacturer="{{ vehicle.vehicleManufacturer }}"
-            onclick="showEditForm('{{ vehicle.id }}')">
+            data-equipped="{{ vehicle.isEquipped }}"  
+            onclick="showEditForm('{{ vehicle.vehicleId }}')">
+
             <div class="car-image">
                 {% if vehicle.vehicleImage %}
                 <img src="{{ vehicle.vehicleImage.url }}" alt="Vehicle Image">
-           
-              
+                {% else %}
+                <img src="/static/images/default-car.png" alt="Vehicle Image">
                 {% endif %}
             </div>
+
             <div class="vehicle-info">
                 <h4>{{ vehicle.vehicleManufacturer }} {{ vehicle.vehicleType }}</h4>
             </div>
         </div>
         {% endfor %}
+        
         <!-- Empty Slot for Adding a New Vehicle -->
         {% if vehicles|length < 3 %}
         <div class="vehicle-card add-vehicle-card" onclick="showRegisterVehicleModal()">
@@ -51,13 +55,18 @@
     <div class="stickers-list">
         {% for sticker in stickers %}
         <div class="sticker-card" id="sticker-{{ sticker.id }}">
-            <div class="sticker-info">
-                <p><strong>Vehicle Model:</strong> {{ sticker.vehicle.vehicleManufacturer }} {{ sticker.vehicle.vehicleType }}</p>
-                <p><strong>Vehicle Color:</strong> {{ sticker.vehicle.vehicleColor }}</p>
-                <p><strong>Sticker Status:</strong> 
-                    <span class="sticker-status" data-expiry-date="{{ sticker.expiryDate }}"></span>
-                </p>
-            </div>
+          <div class="sticker-info">
+    <p><strong>Vehicle Model:</strong> {{ sticker.vehicle.vehicleManufacturer }} {{ sticker.vehicle.vehicleType }}</p>
+    <p><strong>Vehicle Color:</strong> {{ sticker.vehicle.vehicleColor }}</p>
+    <p><strong>Sticker Status:</strong> 
+        {% if sticker.vehicle.isEquipped %}
+            <span class="sticker-status equipped">Equipped</span>
+        {% else %}
+            <span class="sticker-status unequipped">Not Equipped</span>
+        {% endif %}
+    </p>
+</div>
+
             <div class="sticker-actions">
                 <button class="btn-status" id="btn-status-{{ sticker.id }}" data-expiry-date="{{ sticker.expiryDate }}">Status</button>
                   <button class="btn-renew" onclick="showRenewForm('{{ sticker.id }}')">Renew</button>
@@ -91,6 +100,10 @@
                 <input type="text" id="type" name="type" required>
             </div>
             <div class="form-group">
+                <label for="type">Plate Number:</label>
+                <input type="text" id="plate-number" name="plate_number" required>
+            </div>
+            <div class="form-group">
                 <label for="purchase-date">Purchase Date:</label>
                 <input type="date" id="purchase-date" name="purchase_date" required>
             </div>
@@ -117,6 +130,7 @@
         <form id="vehicle-edit-form" method="POST" class="form-layout">
             {% csrf_token %}
             <input type="hidden" name="vehicle_id" id="vehicle-id">
+
             <div class="form-group">
                 <label for="edit-manufacturer">Manufacturer:</label>
                 <input type="text" id="edit-manufacturer" name="manufacturer" required>
@@ -129,6 +143,12 @@
                 <label for="edit-type">Type:</label>
                 <input type="text" id="edit-type" name="type" required>
             </div>
+
+            <!-- Equip Button (moved here) -->
+            <button type="button" id="equip-button" class="equip-button" onclick="toggleEquipStatusInModal()">
+                Equip
+            </button>
+
             <button type="submit" class="btn-primary">Update Vehicle</button>
             <button type="button" onclick="cancelEdit()" class="btn-secondary">Cancel</button>
         </form>
@@ -140,116 +160,160 @@
 
 
 
+
 <!-- JavaScript Section -->
 <script>
-    
     // Get all sticker status elements
     function getStatusColor(expiryDate) {
-    const currentDate = new Date();
-    const expiry = new Date(expiryDate);
-    const timeDiff = expiry - currentDate;
-    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        const currentDate = new Date();
+        const expiry = new Date(expiryDate);
+        const timeDiff = expiry - currentDate;
+        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-    if (daysDiff > 14) {
-        return { color: 'green', text: 'Good' };
-    } else if (daysDiff > 0 && daysDiff <= 14) {
-        return { color: 'yellow', text: 'Near Expiry' };
-    } else {
-        return { color: 'red', text: 'Expired' };
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    // Ensure the userId is included in the registration form before submission
-    const vehicleRegistrationForm = document.getElementById('vehicle-registration-form');
-    const userIdInput = document.getElementById('userId');
-
-    // Set the userId from localStorage
-    userIdInput.value = localStorage.getItem('userId');
-
-    // Optional: Add an event listener to validate userId presence
-    vehicleRegistrationForm.addEventListener('submit', async function (event) {
-        if (!userIdInput.value) {
-            event.preventDefault(); // Prevent form submission
-            alert('User ID is missing. Please log in again.');
-            return;
+        if (daysDiff > 14) {
+            return { color: 'green', text: 'Good' };
+        } else if (daysDiff > 0 && daysDiff <= 14) {
+            return { color: 'yellow', text: 'Near Expiry' };
+        } else {
+            return { color: 'red', text: 'Expired' };
         }
+    }
 
-        event.preventDefault(); // Prevent default submission for AJAX handling
+    document.addEventListener('DOMContentLoaded', function () {
+        const vehicleRegistrationForm = document.getElementById('vehicle-registration-form');
+        const userIdInput = document.getElementById('userId');
 
-        const formData = new FormData(vehicleRegistrationForm);
+        // Set the userId from localStorage
+        userIdInput.value = localStorage.getItem('userId');
+
+        vehicleRegistrationForm.addEventListener('submit', async function (event) {
+            if (!userIdInput.value) {
+                event.preventDefault();
+                alert('User ID is missing. Please log in again.');
+                return;
+            }
+
+            event.preventDefault();
+            const formData = new FormData(vehicleRegistrationForm);
+
+            try {
+                const response = await fetch(vehicleRegistrationForm.action, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const vehicleGrid = document.getElementById('vehicles-grid');
+                    const newVehicleCard = document.createElement('div');
+                    newVehicleCard.className = 'vehicle-card';
+                    newVehicleCard.id = `vehicle-${result.id}`;
+                    newVehicleCard.setAttribute('data-color', result.vehicleColor);
+                    newVehicleCard.setAttribute('data-type', result.vehicleType);
+                    newVehicleCard.setAttribute('data-manufacturer', result.vehicleManufacturer);
+                    newVehicleCard.setAttribute('data-equipped', result.isEquipped); // Add equip status
+                    newVehicleCard.onclick = () => showEditForm(result.id);
+
+                    newVehicleCard.innerHTML = `
+                        <div class="car-image">
+                            <img src="${result.vehicleImageUrl || '/static/images/default-car.png'}" alt="Vehicle Image">
+                        </div>
+                        <div class="vehicle-info">
+                            <h4>${result.vehicleManufacturer} ${result.vehicleType}</h4>
+                        </div>
+                    `;
+
+                    vehicleGrid.appendChild(newVehicleCard);
+                    closeRegisterVehicleModal();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.message || 'Failed to register vehicle.'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An unexpected error occurred.');
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Update the UI with the correct equip status
+        const vehicleCards = document.querySelectorAll('.vehicle-card');
+
+        vehicleCards.forEach(vehicleCard => {
+            const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
+
+            if (isEquipped) {
+                vehicleCard.style.border = "3px solid green";  // Green outline when equipped
+            } else {
+                vehicleCard.style.border = "";  // No outline when unequipped
+            }
+        });
+
+        // Handle equip button text in edit form modal when opened
+        const equipButton = document.getElementById('equip-button');
+        const vehicleId = document.getElementById('vehicle-id').value;
+        const vehicleCard = document.getElementById(`vehicle-${vehicleId}`);
+
+        // If a valid vehicle card is found, update the equip button text
+        if (vehicleCard) {
+            const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
+            equipButton.textContent = isEquipped ? 'Unequip' : 'Equip';
+        }
+    });
+
+    // Function to toggle equip status and update UI
+    async function toggleEquipStatusInModal() {
+        const vehicleId = document.getElementById('vehicle-id').value;
+        const equipButton = document.getElementById('equip-button');
+        const isEquipped = equipButton.textContent === 'Equip';
 
         try {
-            // Send the form data via an AJAX POST request
-            const response = await fetch(vehicleRegistrationForm.action, {
+            const response = await fetch('/api/equip_vehicle/', {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                },
+                body: JSON.stringify({
+                    vehicleId: parseInt(vehicleId),  // Ensure vehicleId is an integer
+                    isEquipped: isEquipped,          // Send equip status (true or false)
+                }),
             });
 
             if (response.ok) {
                 const result = await response.json();
 
-                // Add the new vehicle to the grid dynamically
-                const vehicleGrid = document.getElementById('vehicles-grid');
-                const newVehicleCard = document.createElement('div');
-                newVehicleCard.className = 'vehicle-card';
-                newVehicleCard.id = `vehicle-${result.id}`;
-                newVehicleCard.setAttribute('data-color', result.vehicleColor);
-                newVehicleCard.setAttribute('data-type', result.vehicleType);
-                newVehicleCard.setAttribute('data-manufacturer', result.vehicleManufacturer);
-                newVehicleCard.onclick = () => showEditForm(result.id);
+                // Update the equip button text based on the response
+                equipButton.textContent = result.isEquipped ? 'Unequip' : 'Equip';
 
-                // Add the image and info to the card
-                newVehicleCard.innerHTML = `
-                    <div class="car-image">
-                        <img src="${result.vehicleImageUrl || '/static/images/default-car.png'}" alt="Vehicle Image">
-                    </div>
-                    <div class="vehicle-info">
-                        <h4>${result.vehicleManufacturer} ${result.vehicleType}</h4>
-                    </div>
-                `;
+                // Update the vehicle card in the grid to reflect the equip status
+                const vehicleCard = document.getElementById(`vehicle-${vehicleId}`);
+                if (vehicleCard) {
+                    vehicleCard.setAttribute('data-equipped', result.isEquipped);
 
-                vehicleGrid.appendChild(newVehicleCard);
+                    // Add/remove outline based on equip status
+                    if (result.isEquipped) {
+                        vehicleCard.style.border = "3px solid green";  // Green outline when equipped
+                    } else {
+                        vehicleCard.style.border = "";  // No outline when unequipped
+                    }
+                }
 
-                // Close the modal
-                closeRegisterVehicleModal();
+                alert(`Vehicle ${vehicleId} is now ${result.isEquipped ? 'equipped' : 'unequipped'}.`);
             } else {
                 const error = await response.json();
-                alert('Error: ' + (error.message || 'Failed to register vehicle.'));
+                alert(`Error: ${error.error || 'Failed to toggle equip status.'}`);
             }
         } catch (error) {
             console.error('Error:', error);
             alert('An unexpected error occurred.');
         }
-    });
+    }
 
-    // Add preview functionality for the uploaded vehicle image
-    const vehicleImageInput = document.getElementById('vehicle-image');
-    vehicleImageInput.addEventListener('change', function (event) {
-        const file = event.target.files[0];
-        const previewContainer = document.querySelector('.car-image-preview');
-
-        if (file) {
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                // Create or update the preview image
-                if (!previewContainer) {
-                    const newPreview = document.createElement('img');
-                    newPreview.src = e.target.result;
-                    newPreview.alt = 'Vehicle Image Preview';
-                    newPreview.classList.add('car-image-preview');
-                    vehicleRegistrationForm.appendChild(newPreview);
-                } else {
-                    previewContainer.src = e.target.result;
-                }
-            };
-
-            reader.readAsDataURL(file); // Convert the image to base64 format for preview
-        }
-    });
-});
-
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
 
     function showRegisterVehicleModal() {
         document.getElementById('register-vehicle-modal').style.display = 'block';
@@ -265,11 +329,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const manufacturer = vehicleCard.getAttribute('data-manufacturer');
             const color = vehicleCard.getAttribute('data-color');
             const type = vehicleCard.getAttribute('data-type');
+            const isEquipped = vehicleCard.getAttribute('data-equipped') === 'true';
 
             document.getElementById('vehicle-id').value = vehicleId;
             document.getElementById('edit-manufacturer').value = manufacturer;
             document.getElementById('edit-color').value = color;
             document.getElementById('edit-type').value = type;
+
+            const equipButton = document.getElementById('equip-button');
+            equipButton.textContent = isEquipped ? 'Unequip' : 'Equip';
 
             document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
             document.getElementById('edit-form').style.display = 'block';
@@ -278,14 +346,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-function cancelEdit() {
-    document.getElementById('edit-form').style.display = 'none';
-}
-
-
-
-
+    function cancelEdit() {
+        document.getElementById('edit-form').style.display = 'none';
+    }
 </script>
+
+
 
 <style>
     /* General Styles */
@@ -481,7 +547,7 @@ object-fit: cover;
     font-weight: 600;
     color: #333;
     margin-bottom: 5px;
-} */
+}  */
 
 /* .vehicle-info p {
     font-size: 0.9rem;

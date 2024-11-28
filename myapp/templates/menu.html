@@ -131,12 +131,12 @@
             <hr>
             <div class="vehicle-info">
                 <div class="vehicle-image">
-                    <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image">
+                    <img src="{{ vehicle_info.image|default:'default-vehicle.png' }}" alt="Vehicle Image" id="vehicle-image">
                 </div>
                 <div class="vehicle-details">
                     <h4 id="vehicle-name">Vehicle Name: {{ vehicle_info.manufacturer }}</h4>
                     <p id="vehicle-model">Model: {{ vehicle_info.type }}</p>
-                    <p id="vehicle-plate">Plate Number: </p>
+                    <p id="vehicle-plate">Plate Number: {{ vehicle_info.plate_number}} </p>
                 </div>
             </div>
         </div>
@@ -220,29 +220,42 @@
             });
 
 
-            // Fetch vehicle details on page load
- document.addEventListener('DOMContentLoaded', function() {
-    // Get vehicle information from the backend context
-    const vehicleInfo = {
-        manufacturer: "{{ vehicle_info.manufacturer }}",
-        type: "{{ vehicle_info.type }}",
-        plateNumber: "{{ vehicle_info.plate_number }}",
-        color: "{{ vehicle_info.color }}"
-    };
+             // Fetch vehicle details on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const userId = localStorage.getItem('userId'); // Get userId from localStorage
 
-    // Update the HTML with vehicle details
-    const vehicleNameElement = document.getElementById('vehicle-name');
-    const vehicleModelElement = document.getElementById('vehicle-model');
-    const vehiclePlateElement = document.getElementById('vehicle-plate');
-    const vehicleImageElement = document.getElementById('vehicle-image');
+            if (userId) {
+                fetch(`http://127.0.0.1:8000/api/get_equipped_vehicle/?userId=${userId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Vehicle data:', data); // Log vehicle data for debugging
 
-    // Update vehicle name, model, and plate number
-    vehicleNameElement.textContent = `Vehicle Name: ${vehicleInfo.manufacturer}`;
-    vehicleModelElement.textContent = `Model: ${vehicleInfo.type}`;
-    vehiclePlateElement.textContent = `Plate Number: ${vehicleInfo.plateNumber}`;
+                        if (data.vehicle_info) {
+                            const vehicleNameElement = document.getElementById('vehicle-name');
+                            const vehicleModelElement = document.getElementById('vehicle-model');
+                            const vehiclePlateElement = document.getElementById('vehicle-plate');
+                            const vehicleImageElement = document.getElementById('vehicle-image');
 
-  
-});
+                            vehicleNameElement.textContent = `Vehicle Name: ${data.vehicle_info.manufacturer}`;
+                            vehicleModelElement.textContent = `Model: ${data.vehicle_info.type}`;
+                            vehiclePlateElement.textContent = `Plate Number: ${data.vehicle_info.plate_number}`;
+
+                            // Update image source if available
+                            if (data.vehicle_info.image_url) {
+                                vehicleImageElement.src = data.vehicle_info.image_url;
+                            } else {
+                                console.warn('Image URL not available. Using default.');
+                                vehicleImageElement.src = '{% static "default-vehicle.png" %}';
+                            }
+                        } else {
+                            console.error('No equipped vehicle found for this user.');
+                        }
+                    })
+                    .catch(error => console.error('Error fetching vehicle details:', error));
+            } else {
+                console.error('No userId found in localStorage.');
+            }
+        });
 
     </script>
 </body>

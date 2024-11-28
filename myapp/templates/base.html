@@ -133,12 +133,12 @@
     <hr>
     <div class="vehicle-info">
         <div class="vehicle-image">
-            <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image">
+            <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image" id="vehicle-image">
         </div>
         <div class="vehicle-details">
             <h4 id="vehicle-name">Vehicle Name: {{ vehicle_info.manufacturer }}</h4>
-             <p id="vehicle-model">Model: {{ vehicle_info.type }}</p>
-            <p id="vehicle-plate">Plate Number: </p>
+            <p id="vehicle-model">Model: {{ vehicle_info.type }}</p>
+            <p id="vehicle-plate">Plate Number: {{ vehicle_info.plate_number}} </p>
         </div>
     </div>
 </div>
@@ -162,8 +162,8 @@
 
 </div>
 
-   <!-- Inline JavaScript -->
-   <script>
+  <!-- Inline JavaScript -->
+  <script>
     function toggleRightSidebar() {
         const sidebarRight = document.querySelector('.new-sidebar');
         sidebarRight.style.display = (sidebarRight.style.display === 'block') ? 'none' : 'block';
@@ -216,23 +216,12 @@
             // Clear user session or local storage
             localStorage.removeItem('userId'); // Remove the userId or other session data
             console.log('User logged out successfully.');
- 
+
             // Redirect to the login page
             window.location.href = 'http://127.0.0.1:8000/api/login/';
         });
 
 
-                    // Fetch vehicle details on page load
-        document.addEventListener("DOMContentLoaded", function() {
-            fetch('/api/vehicle-info/')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('vehicle-name').textContent = "Vehicle Name: " + data.manufacturer;
-                    document.getElementById('vehicle-model').textContent = "Model: " + data.type;
-                    document.getElementById('vehicle-plate').textContent = "Plate Number: " + data.plate_number;
-                })
-                .catch(error => console.error('Error fetching vehicle info:', error));
-        });
 
 </script>
 

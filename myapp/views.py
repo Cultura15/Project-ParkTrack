@@ -4,12 +4,11 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import User, Vehicle, Sticker
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, Http404,  HttpResponseServerError
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect  
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
-import json, logging
-
+import json, logging, requests
 
 # Home localhost
 def home(request):
@@ -99,7 +98,6 @@ def user_login(request):
     
 
 # api/menu
-
 def menu_view(request):
     user = request.user  # Get the logged-in user
 
@@ -115,7 +113,8 @@ def menu_view(request):
             "manufacturer": vehicle.vehicleManufacturer if vehicle else "None",
             "type": vehicle.vehicleType if vehicle else "N/A",
             "color": vehicle.vehicleColor if vehicle else "N/A",
-            "plate_number": "ABC-1234" if vehicle else "N/A"  # Placeholder plate info
+            "plate_number": vehicle.plate_number if vehicle else "N/A",  # Placeholder plate info
+            "image": vehicle.vehicleImage.url if vehicle and vehicle.vehicleImage else None,  # Vehicle image path
         }
     else:
         user_name = "Guest"
@@ -125,7 +124,8 @@ def menu_view(request):
             "manufacturer": "None",
             "type": "N/A",
             "color": "N/A",
-            "plate_number": "N/A"
+            "plate_number": "N/A",
+            "image": None,  # No image for guests
         }
 
     # Render the menu template with user and vehicle information
@@ -136,30 +136,65 @@ def menu_view(request):
         'vehicle_info': vehicle_info,
     })
 
-#api/base
 def base_view(request):
-    if request.user.is_authenticated:
-        # Get user and associated vehicle info
-        user = request.user
-        vehicle = getattr(user, 'vehicle', None)
-        
-        vehicle_info = {
-            "manufacturer": vehicle.vehicleManufacturer if vehicle else "None",
-            "type": vehicle.vehicleType if vehicle else "N/A",
-            "color": vehicle.vehicleColor if vehicle else "N/A",
-            "plate_number": "ABC-1234" if vehicle else "N/A"  # Placeholder plate info
-        }
+    user = request.user  # Get the logged-in user
+
+    if user.is_authenticated:
+        # Fetch user details
+        user_name = f"{user.first_name} {user.last_name}"  # Combine first and last name
+        user_fname = user.first_name
+        user_role = user.groups.first().name if user.groups.exists() else 'Guest'  # Role based on groups, fallback to 'Guest'
+
+        # Call the get_equipped_vehicle API to get the vehicle details
+        try:
+            response = requests.get(f'http://127.0.0.1:8000/api/get_equipped_vehicle/?userId={user.id}')
+            vehicle_info = response.json()
+            if 'error' not in vehicle_info:
+                vehicle_info = {
+                    "manufacturer": vehicle_info.get('manufacturer', 'N/A'),
+                    "type": vehicle_info.get('type', 'N/A'),
+                    "color": vehicle_info.get('color', 'N/A'),
+                    "plate_number": vehicle_info.get('plate_number', 'N/A'),
+                    "image_url": vehicle_info.get('image_url', '/static/default-vehicle.png')
+                }
+            else:
+                vehicle_info = {
+                    "manufacturer": "None",
+                    "type": "N/A",
+                    "color": "N/A",
+                    "plate_number": "N/A",
+                    "image_url": "/static/default-vehicle.png"
+                }
+        except requests.RequestException:
+            vehicle_info = {
+                "manufacturer": "None",
+                "type": "N/A",
+                "color": "N/A",
+                "plate_number": "N/A",
+                "image_url": "/static/default-vehicle.png"
+            }
     else:
-        # Return default info for guests
+        user_name = "Guest"
+        user_fname = "Guest"
+        user_role = "Guest"
         vehicle_info = {
             "manufacturer": "None",
             "type": "N/A",
             "color": "N/A",
-            "plate_number": "N/A"
+            "plate_number": "N/A",
+            "image_url": "/static/default-vehicle.png"
         }
 
-    # Return the vehicle info as JSON
-    return JsonResponse(vehicle_info)
+    # Render the menu template with user and vehicle information
+    return render(request, 'base.html', {
+        'user_name': user_name,
+        'user_role': user_role,
+        'user_fname': user_fname,
+        'vehicle_info': vehicle_info,
+    })
+
+
+
 
 
 
@@ -265,6 +300,17 @@ def sticker(request):
         'stickers': stickers,
     })
 
+def sticker_view(request):
+    vehicles = Vehicle.objects.filter(user=request.user)
+    equipped_vehicle = vehicles.filter(is_equipped=True).first()
+    stickers = Sticker.objects.filter(vehicle__in=vehicles)
+    return render(request, 'sticker.html', {
+        'vehicles': vehicles,
+        'stickers': stickers,
+        'equipped_vehicle': equipped_vehicle,  # Pass the currently equipped vehicle
+    })
+
+
 
 def register_vehicle(request):
     if request.method == 'POST':
@@ -272,6 +318,10 @@ def register_vehicle(request):
 
         try:
             user = User.objects.get(userId=user_id)
+
+            # Check if the user already has 3 vehicles
+            if user.vehicles.count() >= 3:  # Use the related_name from the ForeignKey
+                return JsonResponse({'error': 'You cannot register more than 3 vehicles.'}, status=400)
 
             # Handle optional vehicle image
             vehicle_image = request.FILES.get('vehicleImage')
@@ -282,12 +332,10 @@ def register_vehicle(request):
                 vehicleColor=request.POST['color'],
                 vehicleType=request.POST['type'],
                 vehicleImage=vehicle_image,
+                plate_number=request.POST['plate_number'],  # Assuming plate_number is provided
+                user=user,  # Associate the user with the vehicle
             )
             vehicle.save()
-
-            # Associate the user with the vehicle
-            user.vehicle = vehicle
-            user.save()
 
             # Create a sticker for the vehicle
             Sticker.objects.create(
@@ -300,7 +348,7 @@ def register_vehicle(request):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 # Return JSON response for AJAX
                 return JsonResponse({
-                    'id': vehicle.id,
+                    'id': vehicle.vehicleId,
                     'vehicleManufacturer': vehicle.vehicleManufacturer,
                     'vehicleType': vehicle.vehicleType,
                     'vehicleColor': vehicle.vehicleColor,
@@ -321,6 +369,103 @@ def register_vehicle(request):
 
     # For GET or other request methods
     return render(request, 'register_vehicle.html')
+
+
+@csrf_exempt
+def equip_vehicle(request):
+    if request.method == 'POST':
+        try:
+            # Parse JSON data from the request
+            data = json.loads(request.body)
+
+            vehicle_id = data.get('vehicleId')  # Use vehicleId as per the naming convention
+            is_equipped = data.get('isEquipped')  # Use isEquipped for the equipped status
+
+            # Validate input
+            if vehicle_id is None or is_equipped is None:
+                return JsonResponse({'error': 'Invalid input data.'}, status=400)
+
+            # Fetch the vehicle
+            vehicle = get_object_or_404(Vehicle, vehicleId=vehicle_id)  # Use vehicleId to fetch vehicle
+
+            # Find the user associated with the vehicle
+            user = vehicle.user
+
+            # Check if the user already has another equipped vehicle
+            currently_equipped_vehicle = user.vehicles.filter(is_equipped=True).first()
+
+            if is_equipped:
+                if currently_equipped_vehicle:
+                    # Unequip the currently equipped vehicle before equipping the new one
+                    currently_equipped_vehicle.is_equipped = False
+                    currently_equipped_vehicle.save()
+
+                # Equip the new vehicle
+                vehicle.is_equipped = True
+                vehicle.save()
+
+                # Update the user's vehicle to the newly equipped vehicle
+                user.vehicle = vehicle
+                user.save()
+
+            else:
+                # Unequip the current vehicle
+                vehicle.is_equipped = False
+                vehicle.save()
+
+                # Clear the user's vehicle field if the vehicle is unequipped
+                user.vehicle = None
+                user.save()
+
+            # Return the updated vehicle status in the response
+            return JsonResponse({
+                'vehicleId': vehicle.vehicleId,
+                'isEquipped': vehicle.is_equipped,
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format.'}, status=400)
+        except Exception as e:
+            # Handle other unexpected errors
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+
+
+
+def vehicle_details(request, vehicleId):
+    try:
+        vehicle = Vehicle.objects.get(vehicleId=vehicleId)  # Use vehicleId for lookup
+        return JsonResponse({
+            'vehicleId': vehicle.vehicleId,  # Use vehicleId
+            'manufacturer': vehicle.vehicleManufacturer,
+            'color': vehicle.vehicleColor,
+            'type': vehicle.vehicleType,
+            'isEquipped': vehicle.is_equipped,
+        })
+    except Vehicle.DoesNotExist:
+        return JsonResponse({'error': 'Vehicle not found'}, status=404)
+    
+def get_equipped_vehicle(request):
+    user_id = request.GET.get('userId')
+    
+    if user_id:
+        try:
+            user = User.objects.get(userId=user_id)  # Use userId instead of id
+            vehicle = user.vehicle  # Assuming you have a 'vehicle' related field
+            if vehicle:
+                return JsonResponse({
+                    
+                    'plate_number': vehicle.plate_number,
+                    'image_url': vehicle.vehicleImage.url if vehicle.vehicleImage else None,
+                })
+            else:
+                return JsonResponse({'error': 'No equipped vehicle'}, status=404)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+    else:
+        return JsonResponse({'error': 'No userId provided'}, status=400)
 
 
 

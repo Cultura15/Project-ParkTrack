@@ -252,18 +252,38 @@ hr {
     text-align: center;
 }
 
+.vehicle-info1 {
+    margin-top: auto; /* Pushes this section to the bottom */
+    text-align: center;
+}
+
+
+
+.vehicle-image {
+    background-color: transparent !important; /* Ensure container is transparent */
+}
 
 .vehicle-image img {
-    border: 1px solid #ddd;
-    padding: 5px;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    max-width: 100%;
-    height: auto;
+    background-color: transparent !important; /* Explicitly make the image background transparent */
+    padding: 5px; /* Adjust spacing */
+    border-radius: 5px; /* Rounded corners */
+    max-width: 100%; /* Ensure it resizes responsively */
+    height: auto; /* Maintain aspect ratio */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Optional shadow for better visibility */
+    display: block; /* Ensure it's treated as a block element */
 }
+
+
 
 .vehicle-details h4, 
 .vehicle-details p {
+    margin: 10px 0;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.vehicle-details1 h4, 
+.vehicle-details1 p {
     margin: 10px 0;
     font-size: 14px;
     color: #ffffff;

@@ -38,10 +38,14 @@ class Vehicle(models.Model):
     vehicleManufacturer = models.CharField(max_length=100)
     vehicleColor = models.CharField(max_length=50)
     vehicleType = models.CharField(max_length=50)
-    vehicleImage = models.ImageField(upload_to='vehicle_images/', null=True, blank=True)  # New field
+    vehicleImage = models.ImageField(upload_to='vehicle_images/', null=True, blank=True)
+    plate_number = models.CharField(max_length=20, unique=True)
+    is_equipped = models.BooleanField(default=False)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='vehicles')  # Add this line
 
     def __str__(self):
-        return f"{self.vehicleManufacturer} - {self.vehicleColor} - {self.vehicleType}"
+        return f"{self.vehicleManufacturer} - {self.vehicleColor} - {self.vehicleType} - {self.plate_number}"
+
 
     class Meta:
         db_table = 'myapp_vehicle'  # Custom table name, optional
