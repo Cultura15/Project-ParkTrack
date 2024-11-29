@@ -133,7 +133,11 @@
     <hr>
     <div class="vehicle-info">
         <div class="vehicle-image">
-            <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image" id="vehicle-image">
+            {% if vehicle_info.image %}
+            <img src="{{ vehicle_info.image }}" alt="Vehicle Image" id="vehicle-image">
+        {% else %}
+            <img src="{% static 'default-vehicle.png' %}" alt="Default Vehicle Image" id="vehicle-image">
+        {% endif %}
         </div>
         <div class="vehicle-details">
             <h4 id="vehicle-name">Vehicle Name: {{ vehicle_info.manufacturer }}</h4>
@@ -154,7 +158,7 @@
             <a href="http://127.0.0.1:8000/api/trymap/">Update Parking Status</a>
             <a href="http://127.0.0.1:8000/api/sticker_management/">Sticker Management</a>
             <a href="http://127.0.0.1:8000/api/reservation/">Parking Reservation</a>
-            <a href="http://127.0.0.1:8000/api/accountSettings/">Account Settings</a>
+            <a href="{% url 'accountSettings' %}">Account Settings</a>
             <a href="http://127.0.0.1:8000/api/aboutUs/">About us</a>
         </ul>
     </div>
@@ -220,6 +224,44 @@
             // Redirect to the login page
             window.location.href = 'http://127.0.0.1:8000/api/login/';
         });
+
+             // Fetch vehicle details on page load
+             document.addEventListener('DOMContentLoaded', function () {
+            const userId = localStorage.getItem('userId'); // Get userId from localStorage
+
+            if (userId) {
+                fetch(`http://127.0.0.1:8000/api/get_equipped_vehicle/?userId=${userId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Vehicle data:', data); // Log vehicle data for debugging
+
+                        if (data.vehicle_info) {
+                            const vehicleNameElement = document.getElementById('vehicle-name');
+                            const vehicleModelElement = document.getElementById('vehicle-model');
+                            const vehiclePlateElement = document.getElementById('vehicle-plate');
+                            const vehicleImageElement = document.getElementById('vehicle-image');
+
+                            vehicleNameElement.textContent = `Vehicle Name: ${data.vehicle_info.manufacturer}`;
+                            vehicleModelElement.textContent = `Model: ${data.vehicle_info.type}`;
+                            vehiclePlateElement.textContent = `Plate Number: ${data.vehicle_info.plate_number}`;
+
+                            // Update image source if available
+                            if (data.vehicle_info.image_url) {
+                                vehicleImageElement.src = data.vehicle_info.image_url;
+                            } else {
+                                console.warn('Image URL not available. Using default.');
+                                vehicleImageElement.src = '{% static "default-vehicle.png" %}';
+                            }
+                        } else {
+                            console.error('No equipped vehicle found for this user.');
+                        }
+                    })
+                    .catch(error => console.error('Error fetching vehicle details:', error));
+            } else {
+                console.error('No userId found in localStorage.');
+            }
+        });
+        
 
 
 

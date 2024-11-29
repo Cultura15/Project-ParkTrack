@@ -82,7 +82,11 @@
     <hr>
     <div class="vehicle-info">
         <div class="vehicle-image">
-            <img src="{% static 'default-vehicle.png' %}" alt="Vehicle Image" id="vehicle-image">
+            {% if vehicle_info.image %}
+            <img src="{{ vehicle_info.image }}" alt="Vehicle Image" id="vehicle-image">
+        {% else %}
+            <img src="{% static 'default-vehicle.png' %}" alt="Default Vehicle Image" id="vehicle-image">
+        {% endif %}
         </div>
         <div class="vehicle-details">
             <h4 id="vehicle-name">Vehicle Name: {{ vehicle_info.manufacturer }}</h4>
@@ -100,10 +104,10 @@
     <hr>
     <div class="list">
         <ul>
-            <a href="http://127.0.0.1:8000/api/parkingMap/">Update Parking Status</a>
+            <a href="http://127.0.0.1:8000/api/trymap/">Update Parking Status</a>
             <a href="http://127.0.0.1:8000/api/sticker_management/">Sticker Management</a>
             <a href="http://127.0.0.1:8000/api/reservation/">Parking Reservation</a>
-            <a href="http://127.0.0.1:8000/api/accountSettings/">Account Settings</a>
+            <a href="{% url 'accountSettings' %}">Account Settings</a>
             <a href="http://127.0.0.1:8000/api/aboutUs/">About us</a>
         </ul>
     </div>

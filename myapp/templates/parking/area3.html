@@ -85,11 +85,11 @@
                         button.onclick = (e) => toggleParkingStatus(e, lot.parking_lot_number);
 
                         // Position the button horizontally by adjusting the offset
-                        button.style.top = `${lotDiv.offsetTop + 90}px`; // Adjust the vertical positioning as needed
-                        button.style.left = `${buttonOffsetX + 60}px`; // Set the horizontal position
+                        button.style.top = `${lotDiv.offsetTop + 170}px`; // Adjust the vertical positioning as needed
+                        button.style.left = `${buttonOffsetX + 80}px`; // Set the horizontal position
 
                         // Increase the offset for the next button
-                        buttonOffsetX += 128; // Adjust the gap between buttons
+                        buttonOffsetX += 158; // Adjust the gap between buttons
 
                         container.appendChild(button);
                     }
@@ -200,8 +200,8 @@ background-image: url('{% static "ALLIED.png" %}');
 background-size: 100% 80%;  
 background-repeat: no-repeat;
 background-position: center;
-width: 1300px;
-height: 600px;
+width: 1600px;
+height: 900px;
 margin: 0 auto;
 display: flex; /* Flexbox for horizontal layout */
 flex-wrap: wrap; /* Allow wrapping to the next row if needed */
@@ -212,8 +212,8 @@ justify-content: center; /* Center lots horizontally */
 }
 
 .lot {
-width: 90px;
-height: 60px;
+width: 120px;
+height: 90px;
 border: 1px solid #000;
 display: flex;
 align-items: center;
@@ -221,7 +221,7 @@ justify-content: center;
 border-radius: 5px;
 text-align: center;
 font-size: 12px;
-margin-bottom: 190px;
+margin-bottom: 350px;
 background-color: lightgreen; /* Default for available */
 z-index: 10; /* Ensure it's above the background */
 }

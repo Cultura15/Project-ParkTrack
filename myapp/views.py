@@ -13,6 +13,7 @@ from django.middleware.csrf import get_token
 import json
 import logging
 import requests
+from .utils import get_base_context
 
 from .models import User, Vehicle, Sticker, ParkingArea, ParkingLot, Reservation
 from .forms import ParkingAreaForm, ParkingLotForm, ReservationForm
@@ -144,62 +145,6 @@ def menu_view(request):
         'vehicle_info': vehicle_info,
     })
 
-def base_view(request):
-    user = request.user  # Get the logged-in user
-
-    if user.is_authenticated:
-        # Fetch user details
-        user_name = f"{user.first_name} {user.last_name}"  # Combine first and last name
-        user_fname = user.first_name
-        user_role = user.groups.first().name if user.groups.exists() else 'Guest'  # Role based on groups, fallback to 'Guest'
-
-        # Call the get_equipped_vehicle API to get the vehicle details
-        try:
-            response = requests.get(f'http://127.0.0.1:8000/api/get_equipped_vehicle/?userId={user.id}')
-            vehicle_info = response.json()
-            if 'error' not in vehicle_info:
-                vehicle_info = {
-                    "manufacturer": vehicle_info.get('manufacturer', 'N/A'),
-                    "type": vehicle_info.get('type', 'N/A'),
-                    "color": vehicle_info.get('color', 'N/A'),
-                    "plate_number": vehicle_info.get('plate_number', 'N/A'),
-                    "image_url": vehicle_info.get('image_url', '/static/default-vehicle.png')
-                }
-            else:
-                vehicle_info = {
-                    "manufacturer": "None",
-                    "type": "N/A",
-                    "color": "N/A",
-                    "plate_number": "N/A",
-                    "image_url": "/static/default-vehicle.png"
-                }
-        except requests.RequestException:
-            vehicle_info = {
-                "manufacturer": "None",
-                "type": "N/A",
-                "color": "N/A",
-                "plate_number": "N/A",
-                "image_url": "/static/default-vehicle.png"
-            }
-    else:
-        user_name = "Guest"
-        user_fname = "Guest"
-        user_role = "Guest"
-        vehicle_info = {
-            "manufacturer": "None",
-            "type": "N/A",
-            "color": "N/A",
-            "plate_number": "N/A",
-            "image_url": "/static/default-vehicle.png"
-        }
-
-    # Render the menu template with user and vehicle information
-    return render(request, 'base.html', {
-        'user_name': user_name,
-        'user_role': user_role,
-        'user_fname': user_fname,
-        'vehicle_info': vehicle_info,
-    })
 
 
 
@@ -273,34 +218,47 @@ def update_user(request):
 
 ####### NAVIGATION #####
 
+def base_view1(request):
+    context = get_base_context(request)
+    return render(request, 'base.html', context)
+
 def parkingMap(request):
-    return render(request, 'parkingMap.html')
+    context = get_base_context(request)
+    return render(request, 'parkingMap.html', context)
 
 def aboutUs(request):
-    return render(request, 'aboutus.html')
+    context = get_base_context(request)
+    return render(request, 'aboutus.html', context)
 
 def parkReserve(request):
-    return render(request, 'parkreserve.html')
+    context = get_base_context(request)
+    return render(request, 'parkreserve.html', context)
 
 def accountSettings(request):
-    return render(request, 'account.html')
+    context = get_base_context(request)
+    return render(request, 'account.html', context)
 
 def news(request):
-    return render(request, 'news.html')
+    context = get_base_context(request)
+    return render(request, 'news.html', context)
 
 def map_view(request):
+    context1 = get_base_context(request)  # Base context with user-related data
     context = {
-        'latitude': 10.295559,  # Center latitude (average of north and south)
-        'longitude': 123.880658,  # Center longitude (average of east and west)
-        'zoom': 10,  # Adjusted zoom level for close view
-        'bounds': {  # Define the bounding box for the map
+        'latitude': 10.295559,
+        'longitude': 123.880658,
+        'zoom': 10,
+        'bounds': {
             'north': 10.295951988147875,
-            'south': 10.293841944776801, 
+            'south': 10.293841944776801,
             'west': 123.87978786269375,
             'east': 123.8817703943783,
         }
     }
+    # Merge context dictionaries
+    context.update(context1)
     return render(request, 'tryingMap.html', context)
+
 
         
 
@@ -312,7 +270,7 @@ def map_view(request):
 ##### VEHICLE #####
 
 def sticker_management(request):
-    try:
+    try:    
         stickers = Sticker.objects.all()
     except Exception as e:
         logging.error(f"Error retrieving stickers: {e}")
@@ -321,22 +279,44 @@ def sticker_management(request):
 
 
 def sticker(request):
-    vehicles = Vehicle.objects.all()
-    stickers = Sticker.objects.all()
-    return render(request, 'sticker.html', {
+    # Ensure the user is authenticated
+    if not request.user.is_authenticated:
+        return redirect('login')  # Redirect to login if not authenticated
+
+    # Filter vehicles and stickers by the logged-in user
+    vehicles = Vehicle.objects.filter(user=request.user)
+    stickers = Sticker.objects.filter(vehicle__in=vehicles)
+    
+    # Get additional context
+    context1 = get_base_context(request)
+
+    # Merge context with vehicles and stickers
+    context = {
         'vehicles': vehicles,
         'stickers': stickers,
-    })
+    }
+    context.update(context1)
+
+    return render(request, 'sticker.html', context)
+
+
 
 def sticker_view(request):
+    # Ensure the user is authenticated
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    # Filter vehicles and stickers by user
     vehicles = Vehicle.objects.filter(user=request.user)
     equipped_vehicle = vehicles.filter(is_equipped=True).first()
     stickers = Sticker.objects.filter(vehicle__in=vehicles)
+    
     return render(request, 'sticker.html', {
         'vehicles': vehicles,
         'stickers': stickers,
-        'equipped_vehicle': equipped_vehicle,  # Pass the currently equipped vehicle
+        'equipped_vehicle': equipped_vehicle,
     })
+
 
 
 
@@ -741,6 +721,7 @@ logger = logging.getLogger(__name__)
 logger = logging.getLogger(__name__)
 
 def reservation(request):
+    context1 = get_base_context(request)  # Base context with additional data
     if request.method == 'POST':
         # Ensure the user is logged in before allowing reservation
         if not request.user.is_authenticated:
@@ -791,7 +772,12 @@ def reservation(request):
     else:
         # For GET requests, render the reservation form
         form = ReservationForm()
-        return render(request, 'parking/reservation.html', {'form': form})
+        # Merge context1 with the new context containing the form
+        context = {'form': form}
+        context.update(context1)
+        return render(request, 'parking/reservation.html', context)
+
+    
     
 def reservation_confirmation(request, pk):
     logger.info(f"Reservation Confirmation View Triggered with PK: {pk}")
@@ -835,15 +821,18 @@ def get_parking_lots(request, area_id):
 
 def parking_area1(request):
     # Any necessary context data for Parking Area 1
-    return render(request, 'parking/area1.html')
+    context = get_base_context(request)
+    return render(request, 'parking/area1.html', context)
 
 def parking_area2(request):
     # Any necessary context data for Parking Area 2
-    return render(request, 'parking/area2.html')
+    context = get_base_context(request)
+    return render(request, 'parking/area2.html', context)
 
 def parking_area3(request):
     # Any necessary context data for Parking Area 3
-    return render(request, 'parking/area3.html')
+    context = get_base_context(request)
+    return render(request, 'parking/area3.html', context)
 
 def parking_area4(request):
     # Any necessary context data for Parking Area 4

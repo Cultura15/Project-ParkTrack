@@ -7,7 +7,7 @@
 {% block content %}
 
 <header>
-    ALLIED BLDG. <span>PARKING AREA</span>
+    PE <span>PARKING AREA</span>
 </header>
 
 
@@ -56,7 +56,7 @@
                 const container = document.getElementById('parking-lot-container');
                 container.innerHTML = "";
 
-                const buttonHorizontalGap = 70;  // Set the desired gap between buttons
+                const buttonHorizontalGap = 120;  // Set the desired gap between buttons
 
 data.parking_lots.forEach((lot, index) => {
     const lotDiv = document.createElement('div');
@@ -68,8 +68,8 @@ data.parking_lots.forEach((lot, index) => {
     const rowIndex = Math.floor(index / 5);  // 0 for the first row (1-5), 1 for the second row (6-10)
     const columnIndex = index % 5;          // Column index from 0 to 4
 
-    const position_x = columnIndex * 200 + 80; // Adjust for more spacing between columns
-    const position_y = rowIndex * 180 + 100;  // Adjust to set vertical position for the top and bottom rows
+    const position_x = columnIndex * 200 + 90; // Adjust for more spacing between columns
+    const position_y = rowIndex * 260 + 120;  // Adjust to set vertical position for the top and bottom rows
 
     lotDiv.style.top = `${position_y}px`;
     lotDiv.style.left = `${position_x}px`;
@@ -157,8 +157,9 @@ data.parking_lots.forEach((lot, index) => {
         padding: 20px;
         gap: 100px;
     }
+    
     .legends2, .status2 {
-        width: 600px;
+        width: 300px;
         height: 150px;
         border-radius: 10px;
         padding: 20px;
@@ -208,8 +209,7 @@ data.parking_lots.forEach((lot, index) => {
         gap: 20px;                            /* Space between grid items */
         justify-items: center;                /* Center items horizontally */
         align-items: center;                  /* Center items vertically */
-        width: 100%;
-        max-width: 1300px;
+        width: 1600px;
         height: 900px;
         margin: 0 auto;
         padding: 20px;
@@ -219,8 +219,9 @@ data.parking_lots.forEach((lot, index) => {
         background-position: center;
     }
     .lot {
-        width: 100px;
-        height: 60px;
+        width: 150px;
+        height: 100px;
+        margin-right: 20px;
         border: 1px solid #000;
         display: flex;
         align-items: center;

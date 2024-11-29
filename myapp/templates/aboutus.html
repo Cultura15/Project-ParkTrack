@@ -4,15 +4,45 @@
 {% block title %}About Us{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
+
+
+
+
+    <div class="headerr">
+        <h1>About Us</h1>
+        <p>At ParkTrack, we are committed to revolutionizing the way you manage parking at your institution. With our easy-to-use system, you can reserve parking spots, manage parking stickers, and keep track of parking availability — all from a single, intuitive dashboard.</p>
+    </div>
+
+    <div class="content-section">
+        <div class="parking-image">
+            <img src="{% static 'logo.png' %}" alt="parkingImage">
+        </div>
+        <div class="text-content">
+            <h2>Our Mission</h2>
+            <p>Our mission is to simplify parking management through technology, making it efficient and stress-free for users and administrators alike. Whether you're looking for a parking spot or managing permits, ParkTrack is here to make the process seamless.</p>
+
+            <h2>Our Vision</h2>
+            <p>We envision a world where parking is no longer a hassle but a smooth, automated experience. By integrating innovative features and real-time data, we aim to remove the guesswork from parking and provide reliable solutions to parking management challenges.</p>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="contact-section">
+        <h3>Support: We offer dedicated customer support to assist you with any issues you encounter.</h3>
+        <h3>Get in Touch</h3>
+        <p>Have any questions or need support? Feel free to reach out to us anytime.</p>
+        <p>Email: support@parktrack.com</p>
+        <p>Phone: 1-800-PARK-123</p>
+        <p>Thank you for choosing ParkTrack for your parking management needs!</p>
+    </div>
+
+    
+
+
     <style>
     
 
-        .headerr {
-           
-        }
 
         .content-section {
             display: flex;
@@ -65,36 +95,6 @@
             margin-bottom: 20px;
         }
     </style>
-</head>
-<body>
-    <div class="headerr">
-        <h1>About Us</h1>
-        <p>At ParkTrack, we are committed to revolutionizing the way you manage parking at your institution. With our easy-to-use system, you can reserve parking spots, manage parking stickers, and keep track of parking availability — all from a single, intuitive dashboard.</p>
-    </div>
 
-    <div class="content-section">
-        <div class="parking-image">
-            <img src="{% static 'logo.png' %}" alt="parkingImage">
-        </div>
-        <div class="text-content">
-            <h2>Our Mission</h2>
-            <p>Our mission is to simplify parking management through technology, making it efficient and stress-free for users and administrators alike. Whether you're looking for a parking spot or managing permits, ParkTrack is here to make the process seamless.</p>
 
-            <h2>Our Vision</h2>
-            <p>We envision a world where parking is no longer a hassle but a smooth, automated experience. By integrating innovative features and real-time data, we aim to remove the guesswork from parking and provide reliable solutions to parking management challenges.</p>
-        </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="contact-section">
-        <h3>Support: We offer dedicated customer support to assist you with any issues you encounter.</h3>
-        <h3>Get in Touch</h3>
-        <p>Have any questions or need support? Feel free to reach out to us anytime.</p>
-        <p>Email: support@parktrack.com</p>
-        <p>Phone: 1-800-PARK-123</p>
-        <p>Thank you for choosing ParkTrack for your parking management needs!</p>
-    </div>
-</body>
-</html>
 {% endblock %}

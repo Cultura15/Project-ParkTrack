@@ -25,75 +25,60 @@ class ReservationConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        # Parse the incoming message data
         data = json.loads(text_data)
         action = data.get('action')
+        lot_id = data['lot_id']
+        lot_number = data['lot_number']
+        user_id = data['user']
 
-        if action == 'reserve':
-            # Handle reservation logic
-            lot_id = data['lot_id']
-            lot_number = data['lot_number']
-            user_id = data['user']
-            entry_date = data['entry_date']
-            entry_time = data['entry_time']
-            exit_date = data['exit_date']
-            exit_time = data['exit_time']
+        try:
+            lot = ParkingLot.objects.get(id=lot_id)
+        except ParkingLot.DoesNotExist:
+            return await self.send(text_data=json.dumps({'error': 'Parking lot not found'}))
 
-            try:
-                # Fetch the parking lot and user
-                lot = ParkingLot.objects.get(id=lot_id)
-            except ParkingLot.DoesNotExist:
-                return await self.send(text_data=json.dumps({
-                    'error': 'Parking lot not found'
-                }))
-
-            try:
-                user = User.objects.get(id=user_id)
-            except User.DoesNotExist:
-                return await self.send(text_data=json.dumps({
-                    'error': 'User not found'
-                }))
-
-            if lot.parking_lot_status == 'Occupied':
-                return await self.send(text_data=json.dumps({
-                    'error': 'Parking lot is already occupied'
-                }))
-
-            # Create a reservation
-            reservation = Reservation.objects.create(
-                parking_area=lot.parking_area,
-                parking_lot=lot,
-                user=user,
-                entry_date=entry_date,
-                entry_time=entry_time,
-                exit_date=exit_date,
-                exit_time=exit_time
-            )
-
-            # Update the parking lot status
-            lot.parking_lot_status = 'Occupied'
+        if action == "reserve":
+            # Reserve the parking lot
+            if lot.parking_lot_status == "Occupied":
+                return await self.send(text_data=json.dumps({'error': 'Parking lot is already occupied'}))
+            
+            lot.parking_lot_status = "Occupied"
             lot.save()
 
-            # Send reservation confirmation to the WebSocket group
+            # Notify all clients
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'reservation_update',
                     'lot_id': lot_id,
                     'lot_number': lot_number,
-                    'status': 'Occupied'
+                    'status': "Occupied",
+                    'user_id': user_id
+                }
+            )
+        elif action == "release":
+            # Release the parking lot
+            lot.parking_lot_status = "Available"
+            lot.save()
+
+            # Notify all clients
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'reservation_update',
+                    'lot_id': lot_id,
+                    'lot_number': lot_number,
+                    'status': "Available",
+                    'user_id': None
                 }
             )
 
+
     # Receive a reservation update to send to WebSocket clients
     async def reservation_update(self, event):
-        lot_id = event['lot_id']
-        lot_number = event['lot_number']
-        status = event['status']
-
-        # Send message to WebSocket client
         await self.send(text_data=json.dumps({
-            'lot_id': lot_id,
-            'lot_number': lot_number,
-            'status': status
+            'lot_id': event['lot_id'],
+            'lot_number': event['lot_number'],
+            'status': event['status'],
+            'user_id': event.get('user_id')  # Send user info for personalized updates
         }))
+
