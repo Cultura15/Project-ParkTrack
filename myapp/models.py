@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.conf import settings
 
 
+
+
     ### USER ###
 
 class User(AbstractUser):
@@ -13,6 +15,7 @@ class User(AbstractUser):
     fname = models.CharField(max_length=100)
     lname = models.CharField(max_length=100)
     email = models.EmailField(max_length=254, unique=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True) 
     gender = models.CharField(max_length=10)
     address = models.CharField(max_length=255)
     contactNo = models.CharField(max_length=15)

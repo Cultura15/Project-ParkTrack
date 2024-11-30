@@ -8,67 +8,7 @@
     <link rel="stylesheet" href="{% static 'menu.css' %}">
     <title>{% block title %}ParkTrack{% endblock %}</title>
     {% load static %}
-    <style>
-      body {
-            font-family: 'Poppins', sans-serif;
-        }
 
-        h1, h2, h3, p, span {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        /* Style for the new sidebar */
-        .new-sidebar {
-            display: none;
-            position: absolute;
-            top: 60px;
-            right: 0;
-            width: 250px;
-            height: 100%;
-            background-color: #4D0303;
-            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            border-radius: 5px;
-            overflow-y: auto;
-            z-index: 1000;
-        }
-
-        /* Style for the list inside the new sidebar */
-        .new-sidebar ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .new-sidebar ul li {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .new-sidebar ul li a {
-            text-decoration: none;
-            color: black;
-        }
-
-        .new-sidebar ul li:hover {
-            background-color: #f0f0f0;
-        }
-
-        /* Style for the new sidebar on the left (for iconMenu) */
-        .new-sidebar-left {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 140px;
-            width: 250px;
-            height: 100%;
-            background: linear-gradient(to bottom, #E29E19 0%, #700D0D 60%, #FFFFFF 100%);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            border-radius: 0;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -83,6 +23,12 @@
                 <div class="search-bar">
                     <input type="text" placeholder="Search">
                 </div>
+
+                <div>
+                    <a href="http://127.0.0.1:8000/api/loginadmin/" style="margin-right: 100px; color: white; font-weight: bold; text-decoration: underline;">Admin</a>
+
+                </div>
+                
                 <!-- Dropdown Icon that triggers the right sidebar -->
                 <div class="acc-icon" onclick="toggleRightSidebar()">
                     <img src="{% static 'dropdown.png' %}" alt="drop">
@@ -123,7 +69,7 @@
 <div class="new-sidebar">
     <div class="user-profile">
         <div class="profile-picture">
-            <img src="{% static 'profile.png' %}" alt="User Profile Picture">
+            <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'profile.png' %}{% endif %}" alt="User Profile Picture">
         </div>
         <div class="profile-info">
             <h3 id="user-name">{{ user_name }}</h3>
@@ -194,26 +140,36 @@
 
     // Fetch user details on page load
     document.addEventListener('DOMContentLoaded', function () {
-        const userId = localStorage.getItem('userId'); // Get userId from localStorage
+    const userId = localStorage.getItem('userId'); // Get userId from localStorage
 
-        if (userId) {
-            fetch(`http://127.0.0.1:8000/api/get_user_details/?userId=${userId}`)
-                .then(response => response.json())
-                .then(data => {
+    if (userId) {
+        fetch(`http://127.0.0.1:8000/api/get_user_details/?userId=${userId}`)
+            .then(response => response.json())
+            .then(data => {
                 console.log('User data:', data);  // Log data to see if it's coming through
                 if (data.user) {
+                    // Update the user's full name
                     document.getElementById('user-name').textContent = `${data.user.fname} ${data.user.lname}`;
                     document.getElementById('user-fname').textContent = `Hi, ${data.user.fname}`;
                     document.getElementById('user-role').textContent = `Role: ${data.user.accountType}`;
+
+                    // Update the profile picture
+                    const profilePicture = document.querySelector('.user-profile .profile-picture img');
+                    if (data.user.profile_picture) {
+                        profilePicture.src = data.user.profile_picture;  // Set profile picture if exists
+                    } else {
+                        profilePicture.src = '{% static "profile.png" %}';  // Fallback to default image
+                    }
                 } else {
                     console.error('User not found');
                 }
             })
-                .catch(error => console.error('Error fetching user details:', error));
-        } else {    
-            console.error('No userId found in localStorage');
-        }
-    });
+            .catch(error => console.error('Error fetching user details:', error));
+    } else {    
+        console.error('No userId found in localStorage');
+    }
+});
+
 
         document.querySelector('.iconOut').addEventListener('click', function (event) {
             event.preventDefault(); // Prevent default anchor action
@@ -303,6 +259,69 @@
 
 
 </script>
+
+<style>
+    body {
+          font-family: 'Poppins', sans-serif;
+      }
+
+      h1, h2, h3, p, span {
+          font-family: 'Poppins', sans-serif;
+      }
+
+      /* Style for the new sidebar */
+      .new-sidebar {
+          display: none;
+          position: absolute;
+          top: 60px;
+          right: 0;
+          width: 250px;
+          height: 100%;
+          background-color: #4D0303;
+          box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
+          padding: 20px;
+          border-radius: 5px;
+          overflow-y: auto;
+          z-index: 1000;
+      }
+
+      /* Style for the list inside the new sidebar */
+      .new-sidebar ul {
+          list-style-type: none;
+          padding: 0;
+      }
+
+      .new-sidebar ul li {
+          padding: 10px;
+          border-bottom: 1px solid #ddd;
+      }
+
+      .new-sidebar ul li a {
+          text-decoration: none;
+          color: black;
+      }
+
+      .new-sidebar ul li:hover {
+          background-color: #f0f0f0;
+      }
+
+      /* Style for the new sidebar on the left (for iconMenu) */
+      .new-sidebar-left {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 140px;
+          width: 250px;
+          height: 100%;
+          background: linear-gradient(to bottom, #E29E19 0%, #700D0D 60%, #FFFFFF 100%);
+          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+          padding: 20px;
+          border-radius: 0;
+          z-index: 1000;
+          overflow-y: auto;
+      }
+  </style>
+
 
 </body>
 </html>

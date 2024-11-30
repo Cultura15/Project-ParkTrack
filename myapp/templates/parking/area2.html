@@ -2,17 +2,15 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}PE Area - ParkTrack{% endblock %}
+{% block title %}NGE Area - ParkTrack{% endblock %}
 
 {% block content %}
 
 <header>
-    PE <span>PARKING AREA</span>
+    PE. <span>PARKING AREA</span>
 </header>
 
-
 <div class="container2">
-    <!-- Legends Section -->
     <div class="legends2">
         <h3>Legends</h3>
         <div class="legend-item">
@@ -29,109 +27,206 @@
         </div>
     </div>
 
-    <!-- Current Status Section -->
     <div class="status2">
         <h3>Your Current Status</h3>
         <p id="vehicle-status" class="not-parked">Vehicle Not Parked</p>
     </div>
 </div>
 
-<!-- Parking lot selection -->
-<div id="parking-lot-container">
-    <!-- Dynamic parking lot options will appear here -->
-</div>
+<div id="parking-lot-container"></div>
 
 <script>
-   document.addEventListener('DOMContentLoaded', () => {
-    const areaId = 4; 
 
-    fetchParkingLots();
+document.addEventListener('DOMContentLoaded', () => {
+    const areaId = 4;
+    const userId = parseInt(localStorage.getItem("userId"));
+    const vehicleId = localStorage.getItem("vehicleId");
+
+    if (!userId || !vehicleId) {
+        console.error("User ID or Vehicle ID not found.");
+        return;
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const wsUrl = `${wsProtocol}${window.location.host}/ws/reservation/${areaId}/`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onclose = () => {
+        console.error("WebSocket connection closed unexpectedly");
+    };
+
+    function updateVehicleStatus(lotNumber) {
+        const vehicleStatus = document.getElementById('vehicle-status');
+
+        const vehicleParkedAtLot = localStorage.getItem("vehicleParked") === "true";
+
+        if (vehicleParkedAtLot) {
+            vehicleStatus.textContent = `Your vehicle is currently parked at Lot ${lotNumber}`;
+            vehicleStatus.style.color = 'green';  // Change text color to green
+        } else {
+            vehicleStatus.textContent = 'Vehicle Not Parked';
+            vehicleStatus.style.color = '';  // Reset color
+        }
+    }
 
     function fetchParkingLots() {
-        const url = `http://127.0.0.1:8000/api/get-parking-lots/${areaId}/`;
+    const url = `http://127.0.0.1:8000/api/get-parking-lots/${areaId}/`;
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('parking-lot-container');
-                container.innerHTML = "";
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('parking-lot-container');
+            container.innerHTML = ""; // Clear existing content
 
-                const buttonHorizontalGap = 120;  // Set the desired gap between buttons
+            data.parking_lots.forEach((lot, index) => {
+                const lotDiv = document.createElement('div');
+                lotDiv.classList.add('lot');
+                lotDiv.classList.add(lot.status.toLowerCase());
+                lotDiv.id = `lot-${lot.id}`;
 
-data.parking_lots.forEach((lot, index) => {
-    const lotDiv = document.createElement('div');
-    lotDiv.classList.add('lot');
-    lotDiv.classList.add(lot.status.toLowerCase());
-    lotDiv.id = `lot-${lot.id}`;
+                 // Logic for positioning the lots into two rows: top (1-5) and bottom (6-10)
+                 const rowIndex = Math.floor(index / 5);  // 0 for the first row (1-5), 1 for the second row (6-10)
+                        const columnIndex = index % 5;          // Column index from 0 to 4
 
-    // Logic for positioning the lots into two rows: top (1-5) and bottom (6-10)
-    const rowIndex = Math.floor(index / 5);  // 0 for the first row (1-5), 1 for the second row (6-10)
-    const columnIndex = index % 5;          // Column index from 0 to 4
+                        const position_x = columnIndex * 200 + 90; // Adjust for more spacing between columns
+                        const position_y = rowIndex * 260 + 120;  // Adjust to set vertical position for the top and bottom rows
 
-    const position_x = columnIndex * 200 + 90; // Adjust for more spacing between columns
-    const position_y = rowIndex * 260 + 120;  // Adjust to set vertical position for the top and bottom rows
+                        lotDiv.style.top = `${position_y}px`;
+                        lotDiv.style.left = `${position_x}px`;
 
-    lotDiv.style.top = `${position_y}px`;
-    lotDiv.style.left = `${position_x}px`;
+                        const lotNumber = document.createElement('p');
+                        lotNumber.innerText = `Lot ${lot.parking_lot_number}`;
 
-    const lotNumber = document.createElement('p');
-    lotNumber.innerText = `Lot ${lot.parking_lot_number}`;
+                        const lotStatus = document.createElement('p');
+                        lotStatus.innerText = lot.status;
+                        lotStatus.id = `status-${lot.id}`;
 
-    const lotStatus = document.createElement('p');
-    lotStatus.innerText = lot.status;
-    lotStatus.id = `status-${lot.id}`;
+                // Add circle button for all lots
+                const button = document.createElement('button');
+                button.classList.add('circle-button');
+                button.style.top = `${position_y + 40}px`;
+                button.style.left = `${position_x + (columnIndex === 0 ? 240 : -170)}px`;
+                button.dataset.lotId = lot.id;
 
-    if (lot.status.toLowerCase() === "available") {
-        const button = document.createElement('button');
-        button.classList.add('circle-button');
-        button.style.top = `${position_y + 130}px`; // Adjust vertical position for button
-        button.style.left = `${position_x + buttonHorizontalGap * columnIndex}px`;  // Add gap based on column index
-        button.dataset.lotId = lot.id;
-        button.dataset.isParked = "false";
-        button.onclick = (e) => toggleParkingStatus(e, lot.parking_lot_number);
-        container.appendChild(button);
-    }
+                const lotImage = document.createElement('img');
+                lotImage.classList.add('lot-image');
+                if (lot.status.toLowerCase() === 'occupied') {
 
-    lotDiv.appendChild(lotNumber);
-    lotDiv.appendChild(lotStatus);
-    container.appendChild(lotDiv);
-});
+                    console.log(`Current userId: ${userId}, Lot user_id: ${lot.user_id}`);
 
-            })
-            .catch(error => {
-                console.error('Error fetching parking lots:', error);
+                    // Check if the current user is the one who reserved the lot
+                    if (lot.user_id === userId) {
+                        lotImage.src = '/static/mycar.png';  // Current user parked
+                    } else {
+                        lotImage.src = '/static/satelitecar.png';  // Other user parked
+                    }
+
+                    lotImage.style.width = '300px';
+                    lotImage.style.height = 'auto';
+
+                } else {
+                    lotImage.src = '';  // No image for available lot
+                }
+                lotDiv.appendChild(lotImage);
+
+                if (lot.status.toLowerCase() === "occupied") {
+                    button.textContent = "Unpark";
+                    button.dataset.isParked = "true";
+                    button.style.color = "red";
+                    button.style.fontWeight = "bold";
+                    lotStatus.innerText = '';
+                } else {
+                    button.textContent = "Park";
+                    button.dataset.isParked = "false";
+                    button.style.color = "white";
+                    button.style.fontWeight = "bold";
+                }
+
+                // Add click event listener to the button
+                button.addEventListener('click', (e) => {
+                    const lotId = lot.id;
+                    const action = button.dataset.isParked === "true" ? "unpark" : "park";
+
+                    const endpoint = action === "park" ? '/api/reserve_parking/' : '/api/unpark_vehicle/';
+                    const payload = action === "park" 
+                        ? { lot_id: lotId, user_id: userId, vehicle_id: vehicleId }
+                        : { lot_id: lotId }; // Simplified unpark payload
+
+                    if (confirm(`Please confirm to ${action} at Lot ${lotId}.`)) {
+                        fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payload),
+                        })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.status === 'success') {
+                                button.dataset.isParked = action === "park" ? "true" : "false";
+                                document.getElementById(`status-${lotId}`).innerText = action === "park" ? "Occupied" : "Available";
+                                localStorage.setItem("vehicleParked", action === "park" ? "true" : "false");
+                                if (action === "unpark") localStorage.removeItem("vehicleLotNumber");
+
+                                   // Update vehicle status
+                                   if (action === "park") {
+                                    localStorage.setItem("vehicleParked", "true");
+                                    localStorage.setItem("vehicleLotNumber", lot.parking_lot_number); // Store the lot number
+                                } else {
+                                    localStorage.setItem("vehicleParked", "false");
+                                    localStorage.removeItem("vehicleLotNumber"); // Clear the lot number
+                                }
+
+                                // Update the vehicle status display
+                                updateVehicleStatus(action === "park" ? lot.parking_lot_number : "");
+                                
+
+                                alert(`Successfully ${action === "park" ? "parked" : "released"} Lot ${lotId}.`);
+
+                                location.reload(); 
+                            } else {
+                                alert(data.message);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Error during API request:', error);
+                        });
+                    }
+                });
+                container.appendChild(button);
+
+                // Append to lot div
+                lotDiv.appendChild(lotNumber);
+                lotDiv.appendChild(lotStatus);
+                container.appendChild(lotDiv);
             });
-    }
+        })
+        .catch(error => {
+            console.error('Error fetching parking lots:', error);
+        });
+}
 
-    function toggleParkingStatus(event, lotNumber) {
-        const button = event.target;
-        const isParked = button.dataset.isParked === "true";
-        const vehicleStatus = document.getElementById('vehicle-status');
-        const lotStatus = document.getElementById(`status-${button.dataset.lotId}`);
+// On page load, check if vehicle is parked
+const parked = localStorage.getItem("vehicleParked");
+const lotNumber = localStorage.getItem("vehicleLotNumber");
 
-        if (isParked) {
-            button.style.backgroundColor = "rgb(170, 255, 0)";
-            vehicleStatus.innerText = "Vehicle Not Parked";
-            vehicleStatus.classList.remove("parked");
-            vehicleStatus.classList.add("not-parked");
-            lotStatus.innerText = "available";
-            lotStatus.parentElement.classList.remove("your-vehicle");
-            lotStatus.parentElement.classList.add("available");
-        } else {
-            button.style.backgroundColor = "#FFD700";
-            vehicleStatus.innerText = `Vehicle Parked in NGE Area Parking no.${lotNumber}`;
-            vehicleStatus.classList.remove("not-parked");
-            vehicleStatus.classList.add("parked");
-            lotStatus.innerText = "your_vehicle";
-            lotStatus.parentElement.classList.remove("available");
-            lotStatus.parentElement.classList.add("your-vehicle");
-        }
+if (parked === "true" && lotNumber) {
+    updateVehicleStatus(lotNumber);  // Display "Your vehicle is currently parked at Lot ..."
+} else {
+    updateVehicleStatus("");  // Display "Vehicle Not Parked"
+}
 
-        button.dataset.isParked = (!isParked).toString();
-    }
-});
+fetchParkingLots();
+
     
+});
+
+
+
+
 </script>
+    
+
 
 
 <style>
@@ -149,15 +244,14 @@ data.parking_lots.forEach((lot, index) => {
     header span {
             color: #FFD700; /* Yellow color for "Parking Area" */
         }
-        
-
+   
+   
     .container2 {
         display: flex;
         justify-content: space-between;
         padding: 20px;
         gap: 100px;
     }
-    
     .legends2, .status2 {
         width: 300px;
         height: 150px;
@@ -165,6 +259,7 @@ data.parking_lots.forEach((lot, index) => {
         padding: 20px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         background-color: lightgray;
+        
     }
     .legends2 h3, .status2 h3 {
         margin-top: 5px;
@@ -196,32 +291,28 @@ data.parking_lots.forEach((lot, index) => {
     }
     .status2 .parked {
         color: green;
-       
     }
     .status2 .not-parked {
         color: red;
     }
+    /* area map size */
     #parking-lot-container {
         position: relative;
-        display: grid;
-        grid-template-columns: repeat(5, 1fr); /* 5 columns */
-        grid-template-rows: repeat(2, 1fr);   /* 2 rows */
-        gap: 20px;                            /* Space between grid items */
-        justify-items: center;                /* Center items horizontally */
-        align-items: center;                  /* Center items vertically */
-        width: 1600px;
-        height: 900px;
-        margin: 0 auto;
-        padding: 20px;
         background-image: url('{% static "PE.png" %}');
         background-size: 100% 80%;
         background-repeat: no-repeat;
         background-position: center;
+        width: 1600px;
+        height: 900px;
+        margin: 0 auto;
+        overflow: hidden;
     }
+
+    /* adjust the container sizes of parkinglots */
     .lot {
+        position: absolute;
         width: 150px;
         height: 100px;
-        margin-right: 20px;
         border: 1px solid #000;
         display: flex;
         align-items: center;
@@ -230,6 +321,7 @@ data.parking_lots.forEach((lot, index) => {
         text-align: center;
         font-size: 12px;
         background-color: lightgreen; /* Default for available */
+        z-index: 10;
     }
     .available {
         background-color: greenyellow; /* Green for available */
@@ -256,12 +348,13 @@ data.parking_lots.forEach((lot, index) => {
         cursor: pointer;
         z-index: 20;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-        margin-top: 100px;
     }
     .circle-button:hover {
         background-color: #FFD700;
     }
-</style>
 
+ 
+
+</style>
 
 {% endblock %}

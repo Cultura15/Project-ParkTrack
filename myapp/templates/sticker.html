@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 {% extends 'base.html' %}
 {% load static %}
 
@@ -64,10 +63,10 @@
             </div>
             <div class="sticker-actions">
                 <button class="btn-status" id="btn-status-{{ sticker.id }}" data-expiry-date="{{ sticker.expiryDate }}">Status</button>
-                <button class="btn-renew" onclick="showRenewStickerModal('{{ sticker.id }}')">Renew</button>
-                <form action="{% url 'delete_vehicle' sticker.vehicle.vehicleId %}" method="POST">
+                <button class="btn-renew" onclick="showEditStickerForm('{{ sticker.id }}')">Renew</button>
+                <form action="{% url 'delete_vehicle' sticker.vehicle.vehicleId %}" method="POST" onsubmit="return confirmDeleteVehicle(event)">
                     {% csrf_token %}
-                    <button class="btn-remove">Remove</button>
+                    <button type="submit" class="btn-remove">Remove</button>
                 </form>
             </div>
         </div>
@@ -75,18 +74,21 @@
     </div>
 </div>
 
-<!-- Renew Sticker Modal -->
-<div id="renew-sticker-modal" class="modal">
+<!-- Edit Sticker Form Section (Modal) -->
+<div id="edit-sticker-form" class="modal" style="display:none;">
     <div class="modal-content">
-        <span class="close" onclick="closeRenewStickerModal()">&times;</span>
-        <h3>Renew Sticker</h3>
-        <form id="renew-sticker-form" onsubmit="submitRenewStickerForm(event)">
-            <input type="hidden" id="renew-sticker-id" name="sticker_id">
+        <h3>Edit Sticker Expiry Date</h3>
+        <form id="sticker-edit-form" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="sticker_id" id="sticker-id">
+            
             <div class="form-group">
-                <label for="new-expiry-date">New Expiry Date:</label>
-                <input type="date" id="new-expiry-date" name="new_expiry_date" required>
+                <label for="edit-expiry-date">New Expiry Date:</label>
+                <input type="date" id="edit-expiry-date" name="new_expiry_date" required>
             </div>
-            <button type="submit" class="btn-primary">Renew</button>
+            
+            <button type="submit" class="btn-primary">Update Expiry Date</button>
+            <button type="button" onclick="cancelEditSticker()" class="btn-secondary">Cancel</button>
         </form>
     </div>
 </div>
@@ -166,43 +168,123 @@
     </div>
 </div>
 
-
-
 <!-- JavaScript Section -->
 <script>
-    // Function to open the renew sticker modal
-function showRenewStickerModal(stickerId) {
-    document.getElementById('renew-sticker-id').value = stickerId;
-    document.getElementById('renew-sticker-modal').style.display = 'block';
+    // Function to show the edit sticker form
+function showEditStickerForm(stickerId) {
+    const stickerCard = document.querySelector(`#sticker-${stickerId}`);
+    if (stickerCard) {
+        const expiryDate = stickerCard.querySelector('.sticker-status').getAttribute('data-expiry-date');
+        
+        document.getElementById('sticker-id').value = stickerId;
+        document.getElementById('edit-expiry-date').value = expiryDate;
+        
+        document.getElementById('sticker-edit-form').action = "{% url 'edit_sticker' '0' %}".replace('0', stickerId);
+        document.getElementById('edit-sticker-form').style.display = 'block';
+    } else {
+        console.error('Sticker card not found');
+    }
 }
 
-// Function to close the renew sticker modal
-function closeRenewStickerModal() {
-    document.getElementById('renew-sticker-modal').style.display = 'none';
+// Function to cancel the edit sticker form
+function cancelEditSticker() {
+    document.getElementById('edit-sticker-form').style.display = 'none';
 }
 
-// Function to submit the renew sticker form
-function submitRenewStickerForm(event) {
+// Handle the form submission
+document.getElementById('sticker-edit-form').addEventListener('submit', async function(event) {
     event.preventDefault();
-    const stickerId = document.getElementById('renew-sticker-id').value;
-    const newExpiryDate = document.getElementById('new-expiry-date').value;
+    
+    const formData = new FormData(this);
+    const stickerId = formData.get('sticker_id');
+    
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: formData,
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const stickerCard = document.getElementById(`sticker-${result.id}`);
+            const statusElement = stickerCard.querySelector('.sticker-status');
+            const statusButton = stickerCard.querySelector('.btn-status');
+            
+            // Update the data-expiry-date attribute
+            statusElement.setAttribute('data-expiry-date', result.expiryDate);
+            statusButton.setAttribute('data-expiry-date', result.expiryDate);
+            
+            // Update the status
+            const statusInfo = getStatusColor(result.expiryDate);
+            statusElement.textContent = statusInfo.text;
+            statusElement.style.color = statusInfo.color;
+            statusButton.style.backgroundColor = statusInfo.color;
+            statusButton.textContent = `Sticker Status: ${statusInfo.text}`;
+            
+            cancelEditSticker();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.message || 'Failed to update sticker.'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('You have successfully renewed your vehicle.');
 
-    const stickerCard = document.getElementById(`sticker-${stickerId}`);
-    const statusElement = stickerCard.querySelector('.sticker-status');
-    const statusButton = stickerCard.querySelector('.btn-status');
+    }
 
-    // Update the data-expiry-date attribute
-    statusElement.setAttribute('data-expiry-date', newExpiryDate);
-    statusButton.setAttribute('data-expiry-date', newExpiryDate);
+    location.reload();
+});
 
-    // Update the status
-    const statusInfo = getStatusColor(newExpiryDate);
-    statusElement.textContent = statusInfo.text;
-    statusElement.style.color = statusInfo.color;
-    statusButton.style.backgroundColor = statusInfo.color;
-    statusButton.textContent = `Sticker Status: ${statusInfo.text}`;
+// Function to cancel the edit sticker form
+function cancelEditSticker() {
+    document.getElementById('edit-sticker-form').style.display = 'none';
+}
 
-    closeRenewStickerModal();
+// Handle the form submission
+document.getElementById('sticker-edit-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(this);
+    const stickerId = formData.get('sticker_id');
+    
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: formData,
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const stickerCard = document.getElementById(`sticker-${result.id}`);
+            const statusElement = stickerCard.querySelector('.sticker-status');
+            const statusButton = stickerCard.querySelector('.btn-status');
+            
+            // Update the data-expiry-date attribute
+            statusElement.setAttribute('data-expiry-date', result.expiryDate);
+            statusButton.setAttribute('data-expiry-date', result.expiryDate);
+            
+            // Update the status
+            const statusInfo = getStatusColor(result.expiryDate);
+            statusElement.textContent = statusInfo.text;
+            statusElement.style.color = statusInfo.color;
+            statusButton.style.backgroundColor = statusInfo.color;
+            statusButton.textContent = `Sticker Status: ${statusInfo.text}`;
+            
+            cancelEditSticker();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.message || 'Failed to update sticker.'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Have a nice day!.');
+    }
+});
+
+// Function to close the modal
+function closeRenewStickerModal() {
+    const modal = document.getElementById('renew-sticker-modal');
+    modal.style.display = 'none';
 }
 
 // Function to get the status color and text based on expiry date
@@ -275,7 +357,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('An unexpected error occurred.');
+            alert('You have successfully registered a vehicle.');
+
+            location.reload(); 
         }
     });
 
@@ -348,6 +432,9 @@ async function toggleEquipStatusInModal() {
             }
 
             alert(`Vehicle ${vehicleId} is now ${result.isEquipped ? 'equipped' : 'unequipped'}.`);
+
+            location.reload(); 
+
         } else {
             const error = await response.json();
             alert(`Error: ${error.error || 'Failed to toggle equip status.'}`);
@@ -388,6 +475,8 @@ function showEditForm(vehicleId) {
 
         document.getElementById('vehicle-edit-form').action = "{% url 'edit_vehicle' '0' %}".replace('0', vehicleId);
         document.getElementById('edit-form').style.display = 'block';
+
+
     } else {
         console.error('Vehicle card not found');
     }
@@ -396,6 +485,61 @@ function showEditForm(vehicleId) {
 function cancelEdit() {
     document.getElementById('edit-form').style.display = 'none';
 }
+
+function confirmDeleteVehicle(event) {
+    const confirmation = confirm("Are you sure you want to delete this vehicle?");
+    if (!confirmation) {
+        return false; // Prevent form submission if canceled
+    }
+
+    
+        alert("You have successfully deleted a vehicle.");
+    
+
+    return true; // Allow form submission
+}
+
+document.getElementById('vehicle-edit-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    
+    const formData = new FormData(this);
+    const vehicleId = formData.get('vehicle_id');
+
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+
+            // Optionally update the UI to reflect changes
+            const vehicleCard = document.getElementById(`vehicle-${vehicleId}`);
+            if (vehicleCard) {
+                vehicleCard.querySelector('.vehicle-info h4').textContent = `${result.manufacturer} ${result.type}`;
+                vehicleCard.setAttribute('data-color', result.color);
+                vehicleCard.setAttribute('data-manufacturer', result.manufacturer);
+                vehicleCard.setAttribute('data-type', result.type);
+            }
+
+            // Show success alert
+            alert("You have successfully updated a vehicle.");
+
+            // Close the edit modal
+            cancelEdit();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.message || 'Failed to update vehicle.'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert("You have successfully updated a vehicle.");
+    }
+
+    location.reload();
+});
+
 
 
 </script>

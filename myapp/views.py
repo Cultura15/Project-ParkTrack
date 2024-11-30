@@ -1,24 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 from django.http import JsonResponse, Http404, HttpResponseServerError
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
-from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.contrib import messages
-from django.middleware.csrf import get_token
 import json
 import logging
-import requests
 from .utils import get_base_context, get_base_context2
-
 from .models import User, Vehicle, Sticker, ParkingArea, ParkingLot, Reservation
 from .forms import ParkingAreaForm, ParkingLotForm, ReservationForm
-from rest_framework.decorators import api_view
-from .serializers import ParkingLotSerializer
+from django.core.files.storage import default_storage
 
 
 # Home localhost
@@ -61,7 +55,8 @@ def get_user_details(request):
                     'fname': user.fname,
                     'lname': user.lname,
                     'accountType': user.accountType,
-                    'email': user.email
+                    'email': user.email,
+                    'profile_picture': user.profile_picture.url if user.profile_picture else None,
                 }
                 return JsonResponse({'user': user_data}, status=200)
             except User.DoesNotExist:
@@ -218,7 +213,115 @@ def update_user(request):
             return JsonResponse({'error': 'User not found'}, status=404)
         
 
+@login_required
+def upload_profile_picture(request):
+    if request.method == 'POST' and request.FILES.get('profile_picture'):
+        user = request.user  # Get the logged-in user
+        profile_picture = request.FILES['profile_picture']
+
+        # Save the file to the user's profile_picture field
+        user.profile_picture = profile_picture
+        user.save()  # Save the user object with the new profile picture
+
+        return JsonResponse({
+            'message': 'Profile picture updated successfully!',
+            'profile_picture_url': user.profile_picture.url  # Return the updated URL
+        })
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def delete_profile_picture(request):
+    user = request.user  # Get the logged-in user
+    user.profile_picture = None  # Set the profile picture to None
+    user.save()  # Save the user object with the deleted profile picture
+
+    return JsonResponse({
+        'message': 'Profile picture deleted successfully!',
+        'profile_picture_url': '/media/default-profile-picture.png'  # Provide a default image or an empty one
+    })
+
+        
+def change_password(request):
+    if request.method == 'POST':
+        old_password = request.POST.get('old_password')
+        new_password = request.POST.get('new_password')
+        
+        # Check if the user is authenticated
+        user = request.user
+        if user is None:
+            return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+        # Check if the old password matches the stored password
+        if not user.check_password(old_password):
+            return JsonResponse({'error': 'Old password is incorrect'}, status=400)
+        
+        # Update the password if the old password is correct
+        user.set_password(new_password)
+        user.save()
+
+        return JsonResponse({'success': 'Password updated successfully'})
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+        
+def delete_account(request):
+        user = request.user  # The authenticated user
+        
+        # Show confirmation (this should be done on the frontend before calling this endpoint)
+        if request.method == 'DELETE':
+            try:
+                user.delete()
+                return JsonResponse({"message": "User account deleted successfully."}, status=204)
+            except Exception as e:
+                return JsonResponse({"error": str(e)}, status=400)
+        
+        return JsonResponse({"error": "Invalid request method."}, status=405)
+
+        
+
 ####### NAVIGATION #####
+
+csrf_exempt
+def loginadmin(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            password = data.get('password')
+
+            # Get the user by email
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'Invalid credentials'}, status=401)
+
+            # Authenticate manually if the email exists
+            user = authenticate(request, username=user.username, password=password)
+
+            if user is not None:
+                login(request, user)
+                user_data = {
+                    'userId': user.userId,
+                    'fname': user.fname,
+                    'lname': user.lname,
+                    'accountType': user.accountType,
+                }
+                return JsonResponse({'message': 'Login successful!', 'user': user_data}, status=200)
+            else:
+                return JsonResponse({'error': 'Invalid credentials'}, status=401)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return render(request, 'loginadmin.html')
+
+def admin1(request):
+    return render(request, 'admin.html', )
+
+
 
 def base_view1(request):
     context = get_base_context(request)
@@ -561,8 +664,6 @@ def edit_sticker(request, sticker_id):
     
     return render(request, 'edit_sticker.html', {'sticker': sticker})
 
-def news(request):
-    return render(request, 'news.html')
 
 
 
@@ -750,62 +851,58 @@ logger = logging.getLogger(__name__)
 # Set up logging
 logger = logging.getLogger(__name__)
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+import json
+
 def reservation(request):
     context1 = get_base_context(request)  # Base context with additional data
     if request.method == 'POST':
-        # Ensure the user is logged in before allowing reservation
         if not request.user.is_authenticated:
             return JsonResponse({"error": "User must be logged in to make a reservation"}, status=401)
 
-        # Parse JSON body
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-        # Log the received data for debugging
         logger.info("Received reservation data: %s", data)
 
-        # Create a ReservationForm instance using the parsed data
         form = ReservationForm(data)
 
         if form.is_valid():
-            # Save the reservation but do not commit to the database yet
             reservation = form.save(commit=False)
             reservation.user = request.user  # Associate the logged-in user with the reservation
-
-            # Get the parking lot associated with the reservation
             parking_lot = reservation.parking_lot
 
-            # Check if the parking lot is available
             if parking_lot.parking_lot_status == 'Occupied':
                 return JsonResponse({'error': 'The selected parking lot is already occupied.'}, status=400)
 
-            # Save the reservation
             reservation.save()
-
-            # After saving, mark the parking lot as "Occupied"
             parking_lot.parking_lot_status = 'Occupied'
             parking_lot.save()
 
-            # Prepare the confirmation URL
             confirmation_url = reverse('reservation_confirmation', kwargs={'pk': reservation.pk})
-            
-            # Respond with a success message and the confirmation URL
-            return JsonResponse({'success': True, 'confirmation_url': confirmation_url})
+
+            # Include vehicleId in the response
+            return JsonResponse({
+                'success': True,
+                'confirmation_url': confirmation_url,
+                'vehicleId': reservation.vehicle.vehicleId  # Assuming `vehicle` is a related field in the reservation model
+            })
 
         else:
-            # Log form errors and return them as part of the response
             logger.error(f"Form validation failed with errors: {form.errors}")
             return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
     else:
-        # For GET requests, render the reservation form
         form = ReservationForm()
-        # Merge context1 with the new context containing the form
         context = {'form': form}
         context.update(context1)
         return render(request, 'parking/reservation.html', context)
+
+
+
 
     
     
@@ -867,11 +964,25 @@ def parking_area1(request):
 def parking_area2(request):
     # Any necessary context data for Parking Area 2
     context = get_base_context(request)
+
+     # Get the extended context that includes vehicle_id
+    context2 = get_base_context2(request)
+    
+    # Merge both context dictionaries
+    context.update(context2)
+
     return render(request, 'parking/area2.html', context)
 
 def parking_area3(request):
     # Any necessary context data for Parking Area 3
     context = get_base_context(request)
+
+     # Get the extended context that includes vehicle_id
+    context2 = get_base_context2(request)
+    
+    # Merge both context dictionaries
+    context.update(context2)
+
     return render(request, 'parking/area3.html', context)
 
 def parking_area4(request):

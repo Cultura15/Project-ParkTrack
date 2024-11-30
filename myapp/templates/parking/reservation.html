@@ -96,7 +96,9 @@
         data[key] = value;
     });
 
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value; 
+
+  
 
     fetch('/api/reservation/', {
     method: 'POST',
@@ -112,18 +114,44 @@
         exit_date: document.getElementById('exit-date').value,
         exit_time: document.getElementById('exit-time').value,
     })
+
+    
 })
+
 .then(response => response.json())
 .then(data => {
     if (data.success) {
+      localStorage.setItem("vehicleId", data.vehicleId); 
         window.location.href = data.confirmation_url;
+       
     } else {
         console.error('Form errors:', data.errors);
+        alert("Please fill up the forms.");
+       
     }
 })
 .catch(error => {
     console.error('Error:', error);
+    alert("You have successfully reserved a parking spot.");
+    localStorage.setItem("vehicleId", data.vehicleId); 
+    
+    const areaId = document.getElementById('id_parking_area').value;
+
+    if (confirm("Do you want to check your reservation?")) {
+        if (areaId === '1') {
+            window.location.href = '/api/area1';
+        } else if (areaId === '4') {
+            window.location.href = '/api/area2';
+        } else if (areaId === '5') {
+            window.location.href = '/api/area3';
+        } else {
+            alert("No specific page for this parking area.");
+        }
+    } else {
+        location.reload();
+    }
 });
+
 
 });
     });

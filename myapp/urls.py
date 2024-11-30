@@ -7,17 +7,24 @@ urlpatterns = [
     path('users/', views.user_list, name='user_list'),  # List all users
     path('users/<int:user_id>/', views.user_detail, name='user_detail'), 
     path('update_user/', views.update_user, name='update_user'),
+    path('chane_password/', views.change_password, name='change_password'),
+    path('delete_account/', views.delete_account, name='delete_account'),
+    path('upload-profile-picture/', views.upload_profile_picture, name='upload_profile_picture'), 
+    path('delete-profile-picture/', views.delete_profile_picture, name='delete_profile_picture'),
     path('get_user_details/', views.get_user_details, name='get_user_details'), 
     path('parkingMap/', views.parkingMap, name='parkingMap'), 
     path('aboutUs/', views.aboutUs, name='aboutUs'), 
     path('parkReserve/', views.parkReserve, name='parkReserve'), 
     # path('accountSettings/', views.accountSettings, name='accountSettings'), 
+    path('admin1/', views.admin1, name='admin'), 
+    path('loginadmin/', views.loginadmin, name='loginadmin'), 
     path('news/', views.news, name='news'), 
     path('trymap/', views.map_view, name='map_view'),
+
    
    
  
-    # artezuela
+
     path('sticker_management/', views.sticker, name='sticker'),
     path('sticker_management/', views.sticker_management, name='sticker_management'), 
     path('register_vehicle/', views.register_vehicle, name='register_vehicle'),
@@ -28,8 +35,6 @@ urlpatterns = [
     path('delete_vehicle/<int:vehicle_id>/', views.delete_vehicle, name='delete_vehicle'),
     path('renew_sticker/<int:sticker_id>/', views.renew_sticker, name='renew_sticker'),
     path('sticker_management/', views.sticker_management, name='sticker_management'), 
-
-    # destura
 
     path('parking-areas/', views.parking_area_list, name='parking_area_list'),
     path('parking-areas/add/', views.parking_area_create, name='parking_area_create'),
@@ -53,7 +58,8 @@ urlpatterns = [
     path('area4/', views.parking_area4, name='parking_area4'),
     path('reserve_parking/', views.reserve_parking, name='reserve_parking'),
     path('unpark_vehicle/', views.unpark_vehicle, name='unpark_vehicle'),
-    path('edit_sticker/', views.edit_sticker, name='edit_sticker'),
+    path('edit_sticker/<int:sticker_id>/', views.edit_sticker, name='edit_sticker'),
+
 
 
 
