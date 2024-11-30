@@ -12,6 +12,7 @@ urlpatterns = [
     path('base/', base_view1, name='base'), 
     path('accountSettings/', accountSettings, name='accountSettings'),
     path('parkReserve/', parkReserve, name='parkReserve'), 
+
    
 
   

@@ -51,6 +51,10 @@ urlpatterns = [
     path('area2/', views.parking_area2, name='parking_area2'),
     path('area3/', views.parking_area3, name='parking_area3'),
     path('area4/', views.parking_area4, name='parking_area4'),
+    path('reserve_parking/', views.reserve_parking, name='reserve_parking'),
+    path('unpark_vehicle/', views.unpark_vehicle, name='unpark_vehicle'),
+    path('edit_sticker/', views.edit_sticker, name='edit_sticker'),
+
 
 
     

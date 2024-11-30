@@ -7,8 +7,9 @@ class ParkingAreaSerializer(serializers.ModelSerializer):
         fields = ['parking_area_id', 'parking_location']
 
 class ParkingLotSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source='user.id', required=False) 
     parking_area = ParkingAreaSerializer()  # Include ParkingArea details in the ParkingLot serialization
 
     class Meta:
         model = ParkingLot
-        fields = ['parking_lot_id', 'parking_area', 'parking_lot_number', 'parking_lot_status']
+        fields = ['parking_lot_id', 'parking_area', 'parking_lot_number', 'parking_lot_status', 'user_id']

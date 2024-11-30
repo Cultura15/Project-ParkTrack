@@ -253,7 +253,7 @@
                                 vehicleImageElement.src = '{% static "default-vehicle.png" %}';
                             }
                         } else {
-                            console.error('No equipped vehicle found for this user.');
+                            console.error('No equipped vehicle found for this user (from base.html).');
                         }
                     })
                     .catch(error => console.error('Error fetching vehicle details:', error));
@@ -261,6 +261,43 @@
                 console.error('No userId found in localStorage.');
             }
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+    const userId = localStorage.getItem('userId'); // Get userId from localStorage
+
+    if (userId) {
+        // Fetch user details
+        fetch(`http://127.0.0.1:8000/api/get_user_details/?userId=${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.user) {
+                    document.getElementById('user-name').textContent = `${data.user.fname} ${data.user.lname}`;
+                    document.getElementById('user-fname').textContent = `Hi, ${data.user.fname}`;
+                    document.getElementById('user-role').textContent = `Role: ${data.user.accountType}`;
+                } else {
+                    console.error('User not found');
+                }
+            })
+            .catch(error => console.error('Error fetching user details:', error));
+
+        // Fetch vehicle details
+        fetch(`http://127.0.0.1:8000/api/get_equipped_vehicle/?userId=${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.vehicleId) {
+                    // Store vehicleId in localStorage
+                    localStorage.setItem('vehicleId', data.vehicleId);
+                    console.log('Vehicle ID:', data.vehicleId); // Log vehicle ID for debugging
+                } else {
+                    console.error('No equipped vehicle found for this user.');
+                }
+            })
+            .catch(error => console.error('Error fetching vehicle details:', error));
+    } else {
+        console.error('No userId found in localStorage.');
+    }
+});
+
         
 
 

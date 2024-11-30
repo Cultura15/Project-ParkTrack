@@ -88,12 +88,13 @@ class ParkingLot(models.Model):
     ]
 
     parking_lot_id = models.AutoField(primary_key=True)
-    parking_area = models.ForeignKey(ParkingArea, related_name='parking_lots', on_delete=models.CASCADE)
+    parking_area = models.ForeignKey('ParkingArea', related_name='parking_lots', on_delete=models.CASCADE)
     parking_lot_number = models.CharField(max_length=10)
     parking_lot_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Available')
+    user = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL)  # ForeignKey to User
+    vehicle = models.ForeignKey('Vehicle', null=True, blank=True, on_delete=models.SET_NULL)  # ForeignKey to Vehicle
 
     def save(self, *args, **kwargs):
-        # Check if this is a new parking lot and if the parking area already has 10 lots
         if not self.pk and self.parking_area.parking_lots.count() >= 10:
             raise ValidationError("Each parking area can only have 10 parking lots.")
         super().save(*args, **kwargs)

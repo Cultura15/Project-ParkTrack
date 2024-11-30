@@ -13,10 +13,12 @@ from django.middleware.csrf import get_token
 import json
 import logging
 import requests
-from .utils import get_base_context
+from .utils import get_base_context, get_base_context2
 
 from .models import User, Vehicle, Sticker, ParkingArea, ParkingLot, Reservation
 from .forms import ParkingAreaForm, ParkingLotForm, ReservationForm
+from rest_framework.decorators import api_view
+from .serializers import ParkingLotSerializer
 
 
 # Home localhost
@@ -464,7 +466,7 @@ def get_equipped_vehicle(request):
             vehicle = user.vehicle  # Assuming you have a 'vehicle' related field
             if vehicle:
                 return JsonResponse({
-                    
+                    'vehicleId': vehicle.vehicleId,
                     'plate_number': vehicle.plate_number,
                     'image_url': vehicle.vehicleImage.url if vehicle.vehicleImage else None,
                 })
@@ -536,6 +538,32 @@ def renew_sticker(request, sticker_id):
         sticker.save()
         return redirect('sticker_management')
     return render(request, 'renew_sticker.html', {'sticker': sticker})
+
+def edit_sticker(request, sticker_id):
+    sticker = get_object_or_404(Sticker, id=sticker_id)
+    
+    if request.method == 'POST':
+        new_expiry_date = request.POST.get('new_expiry_date')
+        
+        if not new_expiry_date:
+            return JsonResponse({'error': 'Expiry date is required'}, status=400)
+        
+        sticker.expiryDate = new_expiry_date
+        sticker.save()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'id': sticker.id,
+                'expiryDate': sticker.expiryDate,
+            })
+        
+        return redirect('sticker_management')
+    
+    return render(request, 'edit_sticker.html', {'sticker': sticker})
+
+def news(request):
+    return render(request, 'news.html')
+
 
 
 #######################################################################################################################################################
@@ -662,6 +690,8 @@ def parking_lot_update(request, pk):
         'lot': lot,
         'parking_area': parking_area,  # Pass the parking_area to the template
     })
+
+
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import ParkingLot
 
@@ -809,7 +839,8 @@ def get_parking_lots(request, area_id):
                 {
                     "id": lot.parking_lot_id,
                     "parking_lot_number": lot.parking_lot_number,
-                    "status": lot.parking_lot_status
+                    "status": lot.parking_lot_status,
+                    "user_id": lot.user.userId if lot.user else None
                 } for lot in parking_lots
             ]
         }
@@ -820,9 +851,18 @@ def get_parking_lots(request, area_id):
     
 
 def parking_area1(request):
-    # Any necessary context data for Parking Area 1
+    # Get the base context
     context = get_base_context(request)
+    
+    # Get the extended context that includes vehicle_id
+    context2 = get_base_context2(request)
+    
+    # Merge both context dictionaries
+    context.update(context2)
+    
+    # Pass the combined context to the template
     return render(request, 'parking/area1.html', context)
+
 
 def parking_area2(request):
     # Any necessary context data for Parking Area 2
@@ -841,6 +881,91 @@ def parking_area4(request):
 
 def reservation_view(request, area_id):
     return render(request, 'area.html', {'area_id': area_id})
+
+# POST CURRENT EQUIPPED VEHICLE IN THE PARKING LOT 
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+@require_POST
+def reserve_parking(request):
+    try:
+        data = json.loads(request.body)
+        lot_id = data.get('lot_id')  # lot_id corresponds to parking_lot_id
+        user_id = data.get('user_id')
+        vehicle_id = data.get('vehicle_id')
+
+        # Fetch user and vehicle using proper field names
+        user = User.objects.get(userId=user_id)
+        vehicle = Vehicle.objects.get(vehicleId=vehicle_id)
+        
+        # Fetch parking lot using the correct field name 'parking_lot_id'
+        parking_lot = ParkingLot.objects.get(parking_lot_id=lot_id)  # Use parking_lot_id here
+
+        
+
+        # Now proceed with reserving the parking lot
+        if parking_lot.parking_lot_status == 'Available':
+            parking_lot.parking_lot_status = 'Occupied'
+            parking_lot.user = user  # Associate the parking lot with the user who reserved it
+            parking_lot.vehicle = vehicle  # Assign the vehicle to the parking lot
+            parking_lot.save()
+
+            # Mark vehicle as equipped (if not already done)
+            vehicle.is_equipped = True
+            vehicle.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Parking lot reserved successfully.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Parking lot is already occupied.'}, status=400)
+
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'User not found.'}, status=404)
+    except Vehicle.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Vehicle not found for this user.'}, status=404)
+    except ParkingLot.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Parking lot not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
+    ### UNPARK VEHICLE
+
+@csrf_exempt
+def unpark_vehicle(request):
+    if request.method == 'POST':
+        try:
+            # Parse JSON payload from the request
+            import json
+            data = json.loads(request.body)
+            lot_id = data.get('lot_id')
+
+            # Validate input
+            if not lot_id:
+                return JsonResponse({"status": "error", "message": "Parking lot ID is required."}, status=400)
+
+            # Fetch the parking lot
+            lot = ParkingLot.objects.get(pk=lot_id)
+
+            # Update the parking lot status to 'Available'
+            lot.parking_lot_status = "Available"
+            lot.user = None
+            lot.vehicle = None
+            lot.save()
+
+            return JsonResponse({"status": "success", "message": "Parking lot has been successfully updated to 'Available'."})
+        except ParkingLot.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Parking lot not found."}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": f"An unexpected error occurred: {str(e)}"}, status=500)
+    else:
+        return JsonResponse({"status": "error", "message": "Invalid request method. Only POST is allowed."}, status=405)
+
+
+
+
+
+
 
 
 
