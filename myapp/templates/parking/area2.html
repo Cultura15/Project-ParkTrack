@@ -6,9 +6,9 @@
 
 {% block content %}
 
-<header>
+<header1>
     PE. <span>PARKING AREA</span>
-</header>
+</header1>
 
 <div class="container2">
     <div class="legends2">
@@ -88,8 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  const rowIndex = Math.floor(index / 5);  // 0 for the first row (1-5), 1 for the second row (6-10)
                         const columnIndex = index % 5;          // Column index from 0 to 4
 
-                        const position_x = columnIndex * 200 + 90; // Adjust for more spacing between columns
-                        const position_y = rowIndex * 260 + 120;  // Adjust to set vertical position for the top and bottom rows
+                        const position_x = columnIndex * 310 + 90; // Adjust for more spacing between columns
+                        const position_y = rowIndex * 440 + 190;  // Adjust to set vertical position for the top and bottom rows
 
                         lotDiv.style.top = `${position_y}px`;
                         lotDiv.style.left = `${position_x}px`;
@@ -104,8 +104,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add circle button for all lots
                 const button = document.createElement('button');
                 button.classList.add('circle-button');
-                button.style.top = `${position_y + 40}px`;
-                button.style.left = `${position_x + (columnIndex === 0 ? 240 : -170)}px`;
+                button.style.top = `${position_y +(rowIndex === 0 ? 130 : -40)}px`;
+                button.style.left = `${position_x + (columnIndex === 0.3 ? 100 : 60)}px`;
                 button.dataset.lotId = lot.id;
 
                 const lotImage = document.createElement('img');
@@ -231,7 +231,7 @@ fetchParkingLots();
 
 <style>
 
-    header {
+    header1 {
             color: #800000; /* Maroon color for "NGE" */
             padding: 20px;
             text-align: center;
@@ -241,7 +241,7 @@ fetchParkingLots();
         
         }
         
-    header span {
+    header1 span {
             color: #FFD700; /* Yellow color for "Parking Area" */
         }
    

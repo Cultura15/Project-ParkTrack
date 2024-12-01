@@ -285,6 +285,8 @@
                     },
                     body: formData,
                 })
+
+
                 .then(response => response.json())
                 .then(data => {
                     if (data.message) {
@@ -293,6 +295,8 @@
                         // Dynamically update the profile picture
                         const profilePicture = document.getElementById('profile-picture');
                         profilePicture.src = data.profile_picture_url;  // Update the image source with the new URL
+
+                        location.reload();
                     } else if (data.error) {
                         alert('Error: ' + data.error);
                     }
@@ -321,6 +325,7 @@
         width: 100%;
         height: 100vh;
         margin: 0 auto;
+        margin-top: 50px;
     }
 
    

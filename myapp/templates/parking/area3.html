@@ -6,9 +6,9 @@
 
 {% block content %}
 
-<header>
+<header2>
     ALLIED BLDG. <span>PARKING AREA</span>
-</header>
+</header2>
 
 <div class="container3">
     <!-- Legends Section -->
@@ -42,54 +42,53 @@
 
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const areaId = 5;
+    const userId = parseInt(localStorage.getItem("userId"));
+    const vehicleId = localStorage.getItem("vehicleId");
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const areaId = 5;
-        const userId = parseInt(localStorage.getItem("userId"));
-        const vehicleId = localStorage.getItem("vehicleId");
-    
-        if (!userId || !vehicleId) {
-            console.error("User ID or Vehicle ID not found.");
-            return;
+    if (!userId || !vehicleId) {
+        console.error("User ID or Vehicle ID not found.");
+        return;
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const wsUrl = `${wsProtocol}${window.location.host}/ws/reservation/${areaId}/`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onclose = () => {
+        console.error("WebSocket connection closed unexpectedly");
+    };
+
+    function updateVehicleStatus(lotNumber) {
+        const vehicleStatus = document.getElementById('vehicle-status');
+
+        const vehicleParkedAtLot = localStorage.getItem("vehicleParked") === "true";
+
+        if (vehicleParkedAtLot) {
+            vehicleStatus.textContent = `Your vehicle is currently parked at Lot ${lotNumber}`;
+            vehicleStatus.style.color = 'green'; // Change text color to green
+        } else {
+            vehicleStatus.textContent = 'Vehicle Not Parked';
+            vehicleStatus.style.color = ''; // Reset color
         }
-    
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const wsUrl = `${wsProtocol}${window.location.host}/ws/reservation/${areaId}/`;
-        const ws = new WebSocket(wsUrl);
-    
-        ws.onclose = () => {
-            console.error("WebSocket connection closed unexpectedly");
-        };
-    
-        function updateVehicleStatus(lotNumber) {
-            const vehicleStatus = document.getElementById('vehicle-status');
-    
-            const vehicleParkedAtLot = localStorage.getItem("vehicleParked") === "true";
-    
-            if (vehicleParkedAtLot) {
-                vehicleStatus.textContent = `Your vehicle is currently parked at Lot ${lotNumber}`;
-                vehicleStatus.style.color = 'green';  // Change text color to green
-            } else {
-                vehicleStatus.textContent = 'Vehicle Not Parked';
-                vehicleStatus.style.color = '';  // Reset color
-            }
-        }
-    
-        function fetchParkingLots() {
+    }
+
+    function fetchParkingLots() {
         const url = `http://127.0.0.1:8000/api/get-parking-lots/${areaId}/`;
-    
+
         fetch(url)
             .then(response => response.json())
             .then(data => {
                 const container = document.getElementById('parking-lot-container');
                 container.innerHTML = ""; // Clear existing content
-    
+
                 data.parking_lots.forEach((lot, index) => {
                     const lotDiv = document.createElement('div');
                     lotDiv.classList.add('lot');
                     lotDiv.classList.add(lot.status.toLowerCase());
                     lotDiv.id = `lot-${lot.id}`;
-    
+
                     // Position logic
                     const columns = 2;
                     const rows = 5;
@@ -97,45 +96,47 @@
                     const rowIndex = index % rows;
                     const position_x = columnIndex * 1000 + 250;
                     const position_y = rowIndex * 145 + 108;
-    
+
                     lotDiv.style.top = `${position_y}px`;
                     lotDiv.style.left = `${position_x}px`;
-    
+
                     // Lot details
                     const lotNumber = document.createElement('p');
-    
+
                     const lotStatus = document.createElement('p');
                     lotStatus.innerText = lot.status;
                     lotStatus.id = `status-${lot.id}`;
-    
+
                     // Add circle button for all lots
                     const button = document.createElement('button');
                     button.classList.add('circle-button');
-                    button.style.top = `${position_y + 40}px`;
-                    button.style.left = `${position_x + (columnIndex === 0 ? 240 : -170)}px`;
+                    button.style.marginTop = '200px'; // Add spacing below the lot
+
                     button.dataset.lotId = lot.id;
-    
+
                     const lotImage = document.createElement('img');
                     lotImage.classList.add('lot-image');
                     if (lot.status.toLowerCase() === 'occupied') {
-    
+
                         console.log(`Current userId: ${userId}, Lot user_id: ${lot.user_id}`);
-    
+
                         // Check if the current user is the one who reserved the lot
                         if (lot.user_id === userId) {
-                            lotImage.src = '/static/mycar.png';  // Current user parked
+                            lotImage.src = '/static/motor2.png'; // Current user parked
+                            lotImage.style.width = '100px'; 
                         } else {
-                            lotImage.src = '/static/satelitecar.png';  // Other user parked
+                            lotImage.src = '/static/motor1.webp'; // Other user parked
+                            lotImage.style.width = '300px';
                         }
-    
-                        lotImage.style.width = '300px';
+
+                       
                         lotImage.style.height = 'auto';
-    
+
                     } else {
-                        lotImage.src = '';  // No image for available lot
+                        lotImage.src = ''; // No image for available lot
                     }
                     lotDiv.appendChild(lotImage);
-    
+
                     if (lot.status.toLowerCase() === "occupied") {
                         button.textContent = "Unpark";
                         button.dataset.isParked = "true";
@@ -148,17 +149,17 @@
                         button.style.color = "white";
                         button.style.fontWeight = "bold";
                     }
-    
+
                     // Add click event listener to the button
                     button.addEventListener('click', (e) => {
                         const lotId = lot.id;
                         const action = button.dataset.isParked === "true" ? "unpark" : "park";
-    
+
                         const endpoint = action === "park" ? '/api/reserve_parking/' : '/api/unpark_vehicle/';
-                        const payload = action === "park" 
+                        const payload = action === "park"
                             ? { lot_id: lotId, user_id: userId, vehicle_id: vehicleId }
                             : { lot_id: lotId }; // Simplified unpark payload
-    
+
                         if (confirm(`Please confirm to ${action} at Lot ${lotId}.`)) {
                             fetch(endpoint, {
                                 method: 'POST',
@@ -167,44 +168,46 @@
                                 },
                                 body: JSON.stringify(payload),
                             })
-                            .then((response) => response.json())
-                            .then((data) => {
-                                if (data.status === 'success') {
-                                    button.dataset.isParked = action === "park" ? "true" : "false";
-                                    document.getElementById(`status-${lotId}`).innerText = action === "park" ? "Occupied" : "Available";
-                                    localStorage.setItem("vehicleParked", action === "park" ? "true" : "false");
-                                    if (action === "unpark") localStorage.removeItem("vehicleLotNumber");
-    
-                                       // Update vehicle status
-                                       if (action === "park") {
-                                        localStorage.setItem("vehicleParked", "true");
-                                        localStorage.setItem("vehicleLotNumber", lot.parking_lot_number); // Store the lot number
+                                .then((response) => response.json())
+                                .then((data) => {
+                                    if (data.status === 'success') {
+                                        button.dataset.isParked = action === "park" ? "true" : "false";
+                                        document.getElementById(`status-${lotId}`).innerText = action === "park" ? "Occupied" : "Available";
+                                        localStorage.setItem("vehicleParked", action === "park" ? "true" : "false");
+                                        if (action === "unpark") localStorage.removeItem("vehicleLotNumber");
+
+                                        // Update vehicle status
+                                        if (action === "park") {
+                                            localStorage.setItem("vehicleParked", "true");
+                                            localStorage.setItem("vehicleLotNumber", lot.parking_lot_number); // Store the lot number
+                                        } else {
+                                            localStorage.setItem("vehicleParked", "false");
+                                            localStorage.removeItem("vehicleLotNumber"); // Clear the lot number
+                                        }
+
+                                        // Update the vehicle status display
+                                        updateVehicleStatus(action === "park" ? lot.parking_lot_number : "");
+
+
+                                        alert(`Successfully ${action === "park" ? "parked" : "released"} Lot ${lotId}.`);
+
+                                        location.reload();
                                     } else {
-                                        localStorage.setItem("vehicleParked", "false");
-                                        localStorage.removeItem("vehicleLotNumber"); // Clear the lot number
+                                        alert(data.message);
                                     }
-    
-                                    // Update the vehicle status display
-                                    updateVehicleStatus(action === "park" ? lot.parking_lot_number : "");
-                                    
-    
-                                    alert(`Successfully ${action === "park" ? "parked" : "released"} Lot ${lotId}.`);
-    
-                                    location.reload(); 
-                                } else {
-                                    alert(data.message);
-                                }
-                            })
-                            .catch((error) => {
-                                console.error('Error during API request:', error);
-                            });
+                                })
+                                .catch((error) => {
+                                    console.error('Error during API request:', error);
+                                });
                         }
                     });
-                    container.appendChild(button);
-    
-                    // Append to lot div
+
+                    // Append lot details and button to the lot div
                     lotDiv.appendChild(lotNumber);
                     lotDiv.appendChild(lotStatus);
+                    lotDiv.appendChild(button);
+
+                    // Append the lot div to the container
                     container.appendChild(lotDiv);
                 });
             })
@@ -212,28 +215,27 @@
                 console.error('Error fetching parking lots:', error);
             });
     }
-    
+
     // On page load, check if vehicle is parked
     const parked = localStorage.getItem("vehicleParked");
     const lotNumber = localStorage.getItem("vehicleLotNumber");
-    
+
     if (parked === "true" && lotNumber) {
-        updateVehicleStatus(lotNumber);  // Display "Your vehicle is currently parked at Lot ..."
+        updateVehicleStatus(lotNumber); // Display "Your vehicle is currently parked at Lot ..."
     } else {
-        updateVehicleStatus("");  // Display "Vehicle Not Parked"
+        updateVehicleStatus(""); // Display "Vehicle Not Parked"
     }
-    
+
     fetchParkingLots();
-    
-        
-    });
+});
+
 
     </script>
 
 
 <style>
   
-    header {
+    header2 {
         color: #800000; /* Maroon color for "NGE" */
         padding: 20px;
         text-align: center;
@@ -241,7 +243,7 @@
         font-weight: bold;
         letter-spacing: 1px;
     }
-    header span {
+    header2 span {
         color: #FFD700; /* Yellow color for "Parking Area" */
     }
     .container3 {
