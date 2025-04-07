@@ -1,0 +1,6 @@
+# Mark files in the app/ folder as code (not documentation or vendor)
+app/* linguist-documentation=false
+app/* linguist-vendored=false
+
+# Explicitly tell Linguist to treat .py files as Python code
+*.py linguist-language=Python
